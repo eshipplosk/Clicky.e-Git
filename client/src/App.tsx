@@ -10,14 +10,15 @@ import { LandingPage } from "@/components/LandingPage";
 import { LoginPage } from "@/components/LoginPage";
 import { StudentDashboard } from "@/components/StudentDashboard";
 import { AdminDashboard } from "@/components/AdminDashboard";
-import { ScholarshipList } from "@/components/ScholarshipList";
-import { ProfileSetup } from "@/components/ProfileSetup";
+import { EnhancedProfile, ProfileData } from "@/components/EnhancedProfile";
+import { FilteredScholarshipList } from "@/components/FilteredScholarshipList";
 import NotFound from "@/pages/not-found";
 
 function Router() {
   const [, setLocation] = useLocation();
   const [userRole, setUserRole] = useState<'student' | 'admin' | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userProfile, setUserProfile] = useState<ProfileData | undefined>(undefined);
 
   const handleLogin = (email: string, password: string, role: 'student' | 'admin') => {
     console.log('Login:', { email, role });
@@ -32,6 +33,11 @@ function Router() {
 
   const handleGetStarted = () => {
     setLocation('/login');
+  };
+
+  const handleProfileSave = (data: ProfileData) => {
+    setUserProfile(data);
+    console.log('Profile saved:', data);
   };
 
   return (
@@ -49,12 +55,12 @@ function Router() {
           </Route>
           <Route path="/student/scholarships">
             <div className="container mx-auto p-6">
-              <ScholarshipList />
+              <FilteredScholarshipList userProfile={userProfile} />
             </div>
           </Route>
           <Route path="/student/profile">
             <div className="container mx-auto p-6">
-              <ProfileSetup />
+              <EnhancedProfile onSave={handleProfileSave} />
             </div>
           </Route>
           <Route path="/admin/dashboard">
