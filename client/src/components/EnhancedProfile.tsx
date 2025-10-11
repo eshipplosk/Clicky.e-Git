@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,6 +15,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { X, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { getStoredProfile } from '../App';
 
 export interface ProfileData {
   // Personal
@@ -50,6 +51,8 @@ export interface ProfileData {
 
 export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => void }) {
   const { toast } = useToast();
+  
+  // Initialize with empty state
   const [formData, setFormData] = useState<ProfileData>({
     firstName: '',
     lastName: '',
@@ -72,6 +75,15 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
     leadershipRoles: [],
     financialNeed: ''
   });
+
+  // Load saved profile on mount
+  useEffect(() => {
+    const savedProfile = getStoredProfile();
+    if (savedProfile) {
+      setFormData(savedProfile);
+      console.log('Loaded saved profile:', savedProfile);
+    }
+  }, []);
 
   const [newExtracurricular, setNewExtracurricular] = useState('');
   const [newSkill, setNewSkill] = useState('');

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -14,11 +14,28 @@ import { EnhancedProfile, ProfileData } from "@/components/EnhancedProfile";
 import { FilteredScholarshipList } from "@/components/FilteredScholarshipList";
 import NotFound from "@/pages/not-found";
 
+// Create a global profile store using localStorage
+const PROFILE_STORAGE_KEY = 'scholarHub_userProfile';
+
+export function getStoredProfile(): ProfileData | undefined {
+  try {
+    const stored = localStorage.getItem(PROFILE_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export function setStoredProfile(profile: ProfileData) {
+  localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile));
+  // Trigger storage event for cross-component updates
+  window.dispatchEvent(new Event('profileUpdated'));
+}
+
 function Router() {
   const [, setLocation] = useLocation();
   const [userRole, setUserRole] = useState<'student' | 'admin' | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userProfile, setUserProfile] = useState<ProfileData | undefined>(undefined);
 
   const handleLogin = (email: string, password: string, role: 'student' | 'admin') => {
     console.log('Login:', { email, role });
@@ -36,8 +53,8 @@ function Router() {
   };
 
   const handleProfileSave = (data: ProfileData) => {
-    setUserProfile(data);
-    console.log('Profile saved:', data);
+    setStoredProfile(data);
+    console.log('Profile saved in App.tsx:', data);
   };
 
   return (
@@ -55,7 +72,7 @@ function Router() {
           </Route>
           <Route path="/student/scholarships">
             <div className="container mx-auto p-6">
-              <FilteredScholarshipList userProfile={userProfile} />
+              <FilteredScholarshipList />
             </div>
           </Route>
           <Route path="/student/profile">

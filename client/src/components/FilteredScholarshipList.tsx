@@ -1,10 +1,11 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { ScholarshipCard } from './ScholarshipCard';
 import { ScholarshipFilters, FilterCriteria } from './ScholarshipFilters';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 import { ProfileData } from './EnhancedProfile';
+import { getStoredProfile } from '../App';
 
 interface Scholarship {
   id: string;
@@ -27,13 +28,20 @@ interface Scholarship {
   };
 }
 
-interface FilteredScholarshipListProps {
-  userProfile?: ProfileData;
-}
-
-export function FilteredScholarshipList({ userProfile }: FilteredScholarshipListProps) {
+export function FilteredScholarshipList() {
+  const [userProfile, setUserProfile] = useState<ProfileData | undefined>(getStoredProfile());
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<FilterCriteria>({});
+
+  // Listen for profile updates
+  useEffect(() => {
+    const handleProfileUpdate = () => {
+      setUserProfile(getStoredProfile());
+    };
+    
+    window.addEventListener('profileUpdated', handleProfileUpdate);
+    return () => window.removeEventListener('profileUpdated', handleProfileUpdate);
+  }, []);
 
   // todo: remove mock functionality
   const mockScholarships: Scholarship[] = [
@@ -246,6 +254,7 @@ export function FilteredScholarshipList({ userProfile }: FilteredScholarshipList
   };
 
   const filteredScholarships = useMemo(() => {
+    console.log('FilteredScholarshipList - userProfile:', userProfile);
     return mockScholarships.filter(scholarship => {
       // Search filter
       if (searchQuery) {
@@ -341,14 +350,17 @@ export function FilteredScholarshipList({ userProfile }: FilteredScholarshipList
       )}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {filteredScholarships.map((scholarship) => (
-          <ScholarshipCard
-            key={scholarship.id}
-            {...scholarship}
-            matchScore={userProfile ? scholarship.matchScore : undefined}
-            onClick={() => console.log('Scholarship clicked:', scholarship.id)}
-          />
-        ))}
+        {filteredScholarships.map((scholarship) => {
+          console.log(`Scholarship ${scholarship.id} - matchScore:`, scholarship.matchScore);
+          return (
+            <ScholarshipCard
+              key={scholarship.id}
+              {...scholarship}
+              matchScore={scholarship.matchScore}
+              onClick={() => console.log('Scholarship clicked:', scholarship.id)}
+            />
+          );
+        })}
       </div>
 
       {filteredScholarships.length === 0 && (
