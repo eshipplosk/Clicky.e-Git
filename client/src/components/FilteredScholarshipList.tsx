@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { ScholarshipCard } from './ScholarshipCard';
 import { ScholarshipFilters, FilterCriteria } from './ScholarshipFilters';
 import { Button } from '@/components/ui/button';
@@ -43,7 +44,12 @@ export function FilteredScholarshipList() {
     return () => window.removeEventListener('profileUpdated', handleProfileUpdate);
   }, []);
 
-  // todo: remove mock functionality
+  // Fetch scholarships from database
+  const { data: scholarships = [], isLoading } = useQuery<Scholarship[]>({
+    queryKey: ['/api/scholarships'],
+  });
+
+  // Mock scholarships for fallback (will be removed once DB is populated)
   const mockScholarships: Scholarship[] = [
     {
       id: '1',
@@ -253,9 +259,12 @@ export function FilteredScholarshipList() {
     return criteria > 0 ? Math.round((score / criteria) * 100) : 50;
   };
 
+  // Use real scholarships if available, otherwise fallback to mock
+  const displayScholarships = scholarships.length > 0 ? scholarships : mockScholarships;
+
   const filteredScholarships = useMemo(() => {
     console.log('FilteredScholarshipList - userProfile:', userProfile);
-    return mockScholarships.filter(scholarship => {
+    return displayScholarships.filter(scholarship => {
       // Search filter
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
