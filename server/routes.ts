@@ -142,6 +142,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid role" });
       }
 
+      // Prevent demoting the last admin
+      if (role === 'student') {
+        const allUsers = await storage.getAllUsers();
+        const adminCount = allUsers.filter(u => u.role === 'admin').length;
+        
+        // Check if the user being demoted is an admin
+        const targetUser = await storage.getUser(req.params.id);
+        if (targetUser?.role === 'admin' && adminCount === 1) {
+          return res.status(400).json({ error: "Cannot remove the last administrator" });
+        }
+      }
+
       const user = await storage.updateUserRole(req.params.id, role);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
@@ -229,10 +241,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/profile", requireAuth, async (req, res) => {
     try {
-      const profile = await storage.createOrUpdateStudentProfile({
+      // Transform empty strings to null for numeric fields
+      const cleanedData = {
         ...req.body,
         userId: req.session.userId,
-      });
+        gpa: req.body.gpa === '' ? null : req.body.gpa,
+        actScore: req.body.actScore === '' ? null : req.body.actScore,
+        satScore: req.body.satScore === '' ? null : req.body.satScore,
+        lsatScore: req.body.lsatScore === '' ? null : req.body.lsatScore,
+        greScore: req.body.greScore === '' ? null : req.body.greScore,
+        volunteerHours: req.body.volunteerHours === '' ? null : req.body.volunteerHours,
+      };
+      
+      const profile = await storage.createOrUpdateStudentProfile(cleanedData);
       res.json(profile);
     } catch (error) {
       console.error("Error saving profile:", error);

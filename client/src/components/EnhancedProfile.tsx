@@ -98,15 +98,15 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
         }
       } catch (error) {
         console.error('Failed to load profile from API:', error);
+      } finally {
+        // Fallback to localStorage if API didn't return data
+        const savedProfile = getStoredProfile();
+        if (savedProfile && !formData.email) {
+          setFormData(savedProfile);
+          console.log('Loaded saved profile from localStorage:', savedProfile);
+        }
+        setIsLoading(false);
       }
-      
-      // Fallback to localStorage
-      const savedProfile = getStoredProfile();
-      if (savedProfile) {
-        setFormData(savedProfile);
-        console.log('Loaded saved profile from localStorage:', savedProfile);
-      }
-      setIsLoading(false);
     };
     
     loadProfile();
