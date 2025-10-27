@@ -13,9 +13,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { X, Plus } from 'lucide-react';
+import { X, Plus, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getStoredProfile } from '../App';
+import { getStoredProfile, setStoredProfile } from '../App';
+import { apiRequest } from '@/lib/queryClient';
 
 export interface ProfileData {
   // Personal
@@ -76,13 +77,39 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
     financialNeed: ''
   });
 
-  // Load saved profile on mount
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Load saved profile on mount (from API or localStorage)
   useEffect(() => {
-    const savedProfile = getStoredProfile();
-    if (savedProfile) {
-      setFormData(savedProfile);
-      console.log('Loaded saved profile:', savedProfile);
-    }
+    const loadProfile = async () => {
+      setIsLoading(true);
+      try {
+        // Try to load from API first
+        const response = await fetch('/api/profile', { credentials: 'include' });
+        if (response.ok) {
+          const apiProfile = await response.json();
+          if (apiProfile) {
+            setFormData(apiProfile);
+            setStoredProfile(apiProfile); // Sync to localStorage
+            console.log('Loaded profile from API:', apiProfile);
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load profile from API:', error);
+      }
+      
+      // Fallback to localStorage
+      const savedProfile = getStoredProfile();
+      if (savedProfile) {
+        setFormData(savedProfile);
+        console.log('Loaded saved profile from localStorage:', savedProfile);
+      }
+      setIsLoading(false);
+    };
+    
+    loadProfile();
   }, []);
 
   const [newExtracurricular, setNewExtracurricular] = useState('');
@@ -106,15 +133,52 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSave?.(formData);
-    toast({
-      title: "Profile saved!",
-      description: "Your profile has been updated successfully.",
-    });
-    console.log('Profile saved:', formData);
+    setIsSaving(true);
+    
+    try {
+      // Save to API
+      const response = await apiRequest('POST', '/api/profile', formData);
+      const savedProfile = await response.json();
+      
+      // Update localStorage
+      setStoredProfile(savedProfile);
+      onSave?.(savedProfile);
+      
+      toast({
+        title: "Profile saved!",
+        description: "Your profile has been updated successfully.",
+      });
+      console.log('Profile saved:', savedProfile);
+    } catch (error: any) {
+      toast({
+        title: "Error saving profile",
+        description: error.message || "Failed to save profile. Please try again.",
+        variant: "destructive",
+      });
+      console.error('Failed to save profile:', error);
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  // Show loading state when initially loading profile
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold" data-testid="text-profile-title">Your Profile</h1>
+          <p className="text-muted-foreground mt-1">Loading your profile...</p>
+        </div>
+        <Card>
+          <CardContent className="p-12 text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -547,8 +611,15 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
       </Card>
 
       <div className="flex justify-end gap-4">
-        <Button type="submit" size="lg" data-testid="button-save-profile">
-          Save Profile
+        <Button type="submit" size="lg" disabled={isSaving || isLoading} data-testid="button-save-profile">
+          {isSaving ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            'Save Profile'
+          )}
         </Button>
       </div>
     </form>
