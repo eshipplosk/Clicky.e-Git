@@ -193,7 +193,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/scholarships", requireAdmin, async (req, res) => {
     try {
-      const validated = insertScholarshipSchema.parse(req.body);
+      // Convert deadline string to Date if needed
+      const data = {
+        ...req.body,
+        deadline: typeof req.body.deadline === 'string' ? new Date(req.body.deadline) : req.body.deadline
+      };
+      const validated = insertScholarshipSchema.parse(data);
       const scholarship = await storage.createScholarship(validated);
       res.json(scholarship);
     } catch (error) {

@@ -1,7 +1,7 @@
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, DollarSign, GraduationCap } from 'lucide-react';
+import { Calendar, DollarSign, GraduationCap, Check } from 'lucide-react';
 
 interface ScholarshipCardProps {
   id: string;
@@ -13,6 +13,9 @@ interface ScholarshipCardProps {
   matchScore?: number;
   description: string;
   onClick?: () => void;
+  onAccept?: (id: string) => void;
+  isAccepted?: boolean;
+  isAccepting?: boolean;
 }
 
 export function ScholarshipCard({
@@ -24,7 +27,10 @@ export function ScholarshipCard({
   eligibility,
   matchScore,
   description,
-  onClick
+  onClick,
+  onAccept,
+  isAccepted,
+  isAccepting
 }: ScholarshipCardProps) {
   const isHighMatch = matchScore && matchScore >= 80;
   const isMediumMatch = matchScore && matchScore >= 60 && matchScore < 80;
@@ -40,14 +46,22 @@ export function ScholarshipCard({
           <h3 className="text-lg font-semibold leading-tight" data-testid={`text-title-${id}`}>
             {title}
           </h3>
-          {matchScore !== undefined && (
-            <Badge 
-              variant={isHighMatch ? "default" : isMediumMatch ? "secondary" : "outline"}
-              data-testid={`badge-match-${id}`}
-            >
-              {matchScore}% Match
-            </Badge>
-          )}
+          <div className="flex items-center gap-2">
+            {isAccepted && (
+              <Badge variant="default" className="gap-1" data-testid={`badge-accepted-${id}`}>
+                <Check className="h-3 w-3" />
+                Accepted
+              </Badge>
+            )}
+            {matchScore !== undefined && (
+              <Badge 
+                variant={isHighMatch ? "default" : isMediumMatch ? "secondary" : "outline"}
+                data-testid={`badge-match-${id}`}
+              >
+                {matchScore}% Match
+              </Badge>
+            )}
+          </div>
         </div>
         <Badge variant="outline" className="w-fit" data-testid={`badge-category-${id}`}>
           {category}
@@ -75,9 +89,24 @@ export function ScholarshipCard({
         </div>
       </CardContent>
 
-      <CardFooter>
+      <CardFooter className="gap-2">
+        {onAccept && !isAccepted && (
+          <Button 
+            className="flex-1"
+            variant="default"
+            onClick={(e) => {
+              e.stopPropagation();
+              onAccept(id);
+            }}
+            disabled={isAccepting}
+            data-testid={`button-accept-${id}`}
+          >
+            {isAccepting ? "Accepting..." : "Accept Scholarship"}
+          </Button>
+        )}
         <Button 
-          className="w-full" 
+          className={onAccept && !isAccepted ? "flex-1" : "w-full"}
+          variant={onAccept && !isAccepted ? "outline" : "default"}
           onClick={(e) => {
             e.stopPropagation();
             onClick?.();

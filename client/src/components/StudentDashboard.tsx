@@ -4,6 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Award, BookOpen, Clock, TrendingUp } from 'lucide-react';
 import { ScholarshipCard } from './ScholarshipCard';
+import { FinancialAidCalculator } from './FinancialAidCalculator';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { queryClient, apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+import type { Scholarship } from '@shared/schema';
 
 interface StudentDashboardProps {
   studentName?: string;
@@ -16,39 +21,39 @@ export function StudentDashboard({
   profileCompletion = 75,
   matchingScholarships = 12
 }: StudentDashboardProps) {
-  // todo: remove mock functionality
-  const mockScholarships = [
-    {
-      id: '1',
-      title: 'STEM Excellence Scholarship',
-      amount: 5000,
-      deadline: 'March 15, 2025',
-      category: 'STEM',
-      eligibility: 'GPA 3.5+ in STEM major',
-      matchScore: 92,
-      description: 'Supporting outstanding students pursuing degrees in Science, Technology, Engineering, and Mathematics.'
+  const { toast } = useToast();
+
+  const { data: scholarships = [], isLoading: isLoadingScholarships } = useQuery<Scholarship[]>({
+    queryKey: ['/api/scholarships'],
+  });
+
+  const { data: acceptedScholarships = [] } = useQuery<Array<{ id: string }>>({
+    queryKey: ['/api/scholarship-applications'],
+  });
+
+  const acceptScholarshipMutation = useMutation({
+    mutationFn: async (scholarshipId: string) => {
+      return await apiRequest("POST", "/api/scholarship-applications", { scholarshipId });
     },
-    {
-      id: '2',
-      title: 'Community Service Award',
-      amount: 3000,
-      deadline: 'April 1, 2025',
-      category: 'Community',
-      eligibility: '50+ volunteer hours',
-      matchScore: 85,
-      description: 'Recognizing students who demonstrate exceptional commitment to community service and leadership.'
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/scholarship-applications"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/financial-aid-summary"] });
+      toast({
+        title: "Scholarship accepted!",
+        description: "The scholarship has been added to your financial aid plan",
+      });
     },
-    {
-      id: '3',
-      title: 'First Generation College Grant',
-      amount: 4500,
-      deadline: 'March 30, 2025',
-      category: 'Financial Aid',
-      eligibility: 'First-gen college student',
-      matchScore: 78,
-      description: 'Supporting first-generation college students in achieving their educational goals.'
-    }
-  ];
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to accept scholarship",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const acceptedScholarshipIds = new Set(acceptedScholarships.map(app => app.id));
+  const topScholarships = scholarships.slice(0, 3);
 
   return (
     <div className="space-y-6">
@@ -119,21 +124,46 @@ export function StudentDashboard({
         </Card>
       )}
 
+      <FinancialAidCalculator />
+
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Top Matches for You</h2>
           <Button variant="outline" data-testid="button-view-all">View All</Button>
         </div>
         
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {mockScholarships.map((scholarship) => (
-            <ScholarshipCard
-              key={scholarship.id}
-              {...scholarship}
-              onClick={() => console.log('Scholarship clicked:', scholarship.id)}
-            />
-          ))}
-        </div>
+        {isLoadingScholarships ? (
+          <div className="text-center py-8">Loading scholarships...</div>
+        ) : topScholarships.length === 0 ? (
+          <Card>
+            <CardContent className="py-8 text-center text-muted-foreground">
+              No scholarships available yet. Check back soon!
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {topScholarships.map((scholarship) => (
+              <ScholarshipCard
+                key={scholarship.id}
+                id={scholarship.id}
+                title={scholarship.title}
+                amount={scholarship.amount}
+                deadline={new Date(scholarship.deadline).toLocaleDateString('en-US', { 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })}
+                category={scholarship.category}
+                eligibility={scholarship.eligibility}
+                description={scholarship.description}
+                onClick={() => console.log('Scholarship clicked:', scholarship.id)}
+                onAccept={(id) => acceptScholarshipMutation.mutate(id)}
+                isAccepted={acceptedScholarshipIds.has(scholarship.id)}
+                isAccepting={acceptScholarshipMutation.isPending}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

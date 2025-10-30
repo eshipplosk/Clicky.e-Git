@@ -48,6 +48,7 @@ export interface ProfileData {
   
   // Financial
   financialNeed: string;
+  tuitionAmount: string;
 }
 
 export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => void }) {
@@ -74,7 +75,8 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
     skills: [],
     volunteerHours: '',
     leadershipRoles: [],
-    financialNeed: ''
+    financialNeed: '',
+    tuitionAmount: ''
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -586,9 +588,24 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
       <Card>
         <CardHeader>
           <CardTitle>Financial Information</CardTitle>
-          <CardDescription>Help us match you with need-based scholarships</CardDescription>
+          <CardDescription>Help us match you with need-based scholarships and calculate financial aid</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="tuitionAmount">Total Tuition Amount</Label>
+            <Input
+              id="tuitionAmount"
+              type="number"
+              min="0"
+              value={formData.tuitionAmount}
+              onChange={(e) => setFormData({ ...formData, tuitionAmount: e.target.value })}
+              placeholder="50000"
+              data-testid="input-tuition-amount"
+            />
+            <p className="text-xs text-muted-foreground">
+              Enter your total yearly tuition to calculate loan eligibility after scholarships
+            </p>
+          </div>
           <div className="space-y-2">
             <Label htmlFor="financialNeed">Financial Need Level</Label>
             <Select 
