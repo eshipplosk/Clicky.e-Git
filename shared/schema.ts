@@ -33,6 +33,7 @@ export const studentProfiles = pgTable("student_profiles", {
   volunteerHours: integer("volunteer_hours"),
   leadershipRoles: text("leadership_roles").array(),
   financialNeed: text("financial_need"),
+  tuitionAmount: integer("tuition_amount"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -63,6 +64,14 @@ export const scholarships = pgTable("scholarships", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const scholarshipApplications = pgTable("scholarship_applications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  scholarshipId: varchar("scholarship_id").notNull().references(() => scholarships.id),
+  status: text("status").notNull().default("accepted"), // 'accepted', 'pending', 'declined'
+  appliedAt: timestamp("applied_at").defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -81,6 +90,11 @@ export const insertScholarshipSchema = createInsertSchema(scholarships).omit({
   updatedAt: true,
 });
 
+export const insertScholarshipApplicationSchema = createInsertSchema(scholarshipApplications).omit({
+  id: true,
+  appliedAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
@@ -89,3 +103,6 @@ export type StudentProfile = typeof studentProfiles.$inferSelect;
 
 export type InsertScholarship = z.infer<typeof insertScholarshipSchema>;
 export type Scholarship = typeof scholarships.$inferSelect;
+
+export type InsertScholarshipApplication = z.infer<typeof insertScholarshipApplicationSchema>;
+export type ScholarshipApplication = typeof scholarshipApplications.$inferSelect;
