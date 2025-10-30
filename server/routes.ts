@@ -231,7 +231,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Student profile routes
   app.get("/api/profile", requireAuth, async (req, res) => {
     try {
-      const profile = await storage.getStudentProfile(req.session.userId);
+      const profile = await storage.getStudentProfile(req.session.userId!);
       res.json(profile || null);
     } catch (error) {
       console.error("Error fetching profile:", error);
@@ -244,13 +244,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Transform empty strings to null for numeric fields
       const cleanedData = {
         ...req.body,
-        userId: req.session.userId,
+        userId: req.session.userId!,
         gpa: req.body.gpa === '' ? null : req.body.gpa,
         actScore: req.body.actScore === '' ? null : req.body.actScore,
         satScore: req.body.satScore === '' ? null : req.body.satScore,
         lsatScore: req.body.lsatScore === '' ? null : req.body.lsatScore,
         greScore: req.body.greScore === '' ? null : req.body.greScore,
         volunteerHours: req.body.volunteerHours === '' ? null : req.body.volunteerHours,
+        tuitionAmount: req.body.tuitionAmount === '' ? null : req.body.tuitionAmount,
       };
       
       const profile = await storage.createOrUpdateStudentProfile(cleanedData);
@@ -258,6 +259,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error saving profile:", error);
       res.status(500).json({ error: "Failed to save profile" });
+    }
+  });
+
+  // Scholarship application routes
+  app.get("/api/scholarship-applications", requireAuth, async (req, res) => {
+    try {
+      const acceptedScholarships = await storage.getAcceptedScholarshipsWithDetails(req.session.userId!);
+      res.json(acceptedScholarships);
+    } catch (error) {
+      console.error("Error fetching scholarship applications:", error);
+      res.status(500).json({ error: "Failed to fetch scholarship applications" });
+    }
+  });
+
+  app.post("/api/scholarship-applications", requireAuth, async (req, res) => {
+    try {
+      const { scholarshipId } = req.body;
+      if (!scholarshipId) {
+        return res.status(400).json({ error: "Scholarship ID is required" });
+      }
+      const application = await storage.acceptScholarship(req.session.userId!, scholarshipId);
+      res.json(application);
+    } catch (error) {
+      console.error("Error accepting scholarship:", error);
+      res.status(500).json({ error: "Failed to accept scholarship" });
+    }
+  });
+
+  app.delete("/api/scholarship-applications/:scholarshipId", requireAuth, async (req, res) => {
+    try {
+      const success = await storage.removeScholarshipApplication(req.session.userId!, req.params.scholarshipId);
+      if (!success) {
+        return res.status(404).json({ error: "Application not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error removing scholarship application:", error);
+      res.status(500).json({ error: "Failed to remove scholarship application" });
+    }
+  });
+
+  // Financial aid summary route
+  app.get("/api/financial-aid-summary", requireAuth, async (req, res) => {
+    try {
+      const profile = await storage.getStudentProfile(req.session.userId!);
+      const acceptedScholarships = await storage.getAcceptedScholarshipsWithDetails(req.session.userId!);
+      
+      const tuitionAmount = profile?.tuitionAmount || 0;
+      const totalScholarships = acceptedScholarships.reduce((sum, s) => sum + s.amount, 0);
+      const loanEligible = Math.max(0, tuitionAmount - totalScholarships);
+      
+      res.json({
+        tuitionAmount,
+        totalScholarships,
+        loanEligible,
+        acceptedScholarships
+      });
+    } catch (error) {
+      console.error("Error fetching financial aid summary:", error);
+      res.status(500).json({ error: "Failed to fetch financial aid summary" });
     }
   });
 

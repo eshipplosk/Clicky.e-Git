@@ -1,6 +1,6 @@
 import { db } from "../db";
-import { users, studentProfiles, scholarships, type User, type InsertUser, type Scholarship, type InsertScholarship, type StudentProfile, type InsertStudentProfile } from "@shared/schema";
-import { eq } from "drizzle-orm";
+import { users, studentProfiles, scholarships, scholarshipApplications, type User, type InsertUser, type Scholarship, type InsertScholarship, type StudentProfile, type InsertStudentProfile, type ScholarshipApplication, type InsertScholarshipApplication } from "@shared/schema";
+import { eq, and, sql } from "drizzle-orm";
 
 export interface IStorage {
   // User methods
@@ -21,6 +21,12 @@ export interface IStorage {
   // Student profile methods
   getStudentProfile(userId: string): Promise<StudentProfile | undefined>;
   createOrUpdateStudentProfile(profile: InsertStudentProfile): Promise<StudentProfile>;
+
+  // Scholarship application methods
+  getScholarshipApplications(userId: string): Promise<ScholarshipApplication[]>;
+  acceptScholarship(userId: string, scholarshipId: string): Promise<ScholarshipApplication>;
+  removeScholarshipApplication(userId: string, scholarshipId: string): Promise<boolean>;
+  getAcceptedScholarshipsWithDetails(userId: string): Promise<Array<Scholarship & { applicationId: string }>>;
 }
 
 export class DbStorage implements IStorage {
@@ -107,6 +113,79 @@ export class DbStorage implements IStorage {
       const result = await db.insert(studentProfiles).values(profile).returning();
       return result[0];
     }
+  }
+
+  // Scholarship application methods
+  async getScholarshipApplications(userId: string): Promise<ScholarshipApplication[]> {
+    return await db.select().from(scholarshipApplications).where(eq(scholarshipApplications.userId, userId));
+  }
+
+  async acceptScholarship(userId: string, scholarshipId: string): Promise<ScholarshipApplication> {
+    // Check if already accepted
+    const existing = await db.select().from(scholarshipApplications)
+      .where(and(
+        eq(scholarshipApplications.userId, userId),
+        eq(scholarshipApplications.scholarshipId, scholarshipId)
+      ));
+    
+    if (existing.length > 0) {
+      return existing[0];
+    }
+
+    const result = await db.insert(scholarshipApplications).values({
+      userId,
+      scholarshipId,
+      status: "accepted"
+    }).returning();
+    return result[0];
+  }
+
+  async removeScholarshipApplication(userId: string, scholarshipId: string): Promise<boolean> {
+    const result = await db.delete(scholarshipApplications)
+      .where(and(
+        eq(scholarshipApplications.userId, userId),
+        eq(scholarshipApplications.scholarshipId, scholarshipId)
+      ))
+      .returning();
+    return result.length > 0;
+  }
+
+  async getAcceptedScholarshipsWithDetails(userId: string): Promise<Array<Scholarship & { applicationId: string }>> {
+    const result = await db
+      .select({
+        id: scholarships.id,
+        title: scholarships.title,
+        description: scholarships.description,
+        amount: scholarships.amount,
+        deadline: scholarships.deadline,
+        category: scholarships.category,
+        eligibility: scholarships.eligibility,
+        minGPA: scholarships.minGPA,
+        minACT: scholarships.minACT,
+        minSAT: scholarships.minSAT,
+        minLSAT: scholarships.minLSAT,
+        minGRE: scholarships.minGRE,
+        ethnicityRequirements: scholarships.ethnicityRequirements,
+        requiresFirstGen: scholarships.requiresFirstGen,
+        requiresVeteran: scholarships.requiresVeteran,
+        requiresDisability: scholarships.requiresDisability,
+        majorRequirements: scholarships.majorRequirements,
+        skillRequirements: scholarships.skillRequirements,
+        minVolunteerHours: scholarships.minVolunteerHours,
+        requiresEssay: scholarships.requiresEssay,
+        status: scholarships.status,
+        createdAt: scholarships.createdAt,
+        updatedAt: scholarships.updatedAt,
+        applicationId: scholarshipApplications.id,
+      })
+      .from(scholarshipApplications)
+      .innerJoin(scholarships, eq(scholarshipApplications.scholarshipId, scholarships.id))
+      .where(and(
+        eq(scholarshipApplications.userId, userId),
+        eq(scholarshipApplications.status, "accepted")
+      ));
+    
+    return result;
   }
 }
 
