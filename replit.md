@@ -4,6 +4,19 @@
 
 ScholarHub is a web-based scholarship management platform designed to connect students with scholarship opportunities while providing administrators with tools to manage scholarship programs. The application features smart matching algorithms that pair students with relevant scholarships based on their academic profiles, demographics, and achievements. Built with a modern tech stack, it emphasizes clarity, efficiency, and accessibility following Material Design principles.
 
+## Recent Changes
+
+**October 30, 2025 - Financial Aid Calculator Feature**
+- Added tuition amount tracking to student profiles
+- Created scholarship applications system for students to accept/remove scholarships
+- Built Financial Aid Calculator component that displays:
+  - Total tuition amount
+  - Total scholarship coverage
+  - Loan-eligible balance (tuition - scholarships)
+- Implemented real-time calculation updates via React Query
+- Added backend API endpoints for scholarship applications and financial aid summary
+- Server now handles ISO date strings for scholarship deadlines by converting to Date objects
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
@@ -49,8 +62,9 @@ Preferred communication style: Simple, everyday language.
 
 **Data Models**
 - Users table with role-based access (student/admin)
-- Student profiles with comprehensive academic and demographic data
+- Student profiles with comprehensive academic and demographic data including tuition amount
 - Scholarships with eligibility criteria and deadline tracking
+- Scholarship applications table tracking student acceptances
 - Support for various standardized test scores (ACT, SAT, LSAT, GRE)
 - Array fields for extracurriculars, skills, and leadership roles
 
