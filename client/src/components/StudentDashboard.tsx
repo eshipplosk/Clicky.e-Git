@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Award, BookOpen, Clock, TrendingUp } from 'lucide-react';
+import { Award, BookOpen, Clock, TrendingUp, Sparkles } from 'lucide-react';
 import { ScholarshipCard } from './ScholarshipCard';
 import { FinancialAidCalculator } from './FinancialAidCalculator';
 import { ProfileCompletionIndicator } from './ProfileCompletionIndicator';
@@ -111,6 +111,27 @@ export function StudentDashboard({
 
 
       <FinancialAidCalculator />
+
+      {/* AI Assistant CTA */}
+      <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10">
+        <CardContent className="flex items-center justify-between gap-4 p-6">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-primary/10 rounded-md">
+              <Sparkles className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-lg">AI Scholarship Assistant</h3>
+              <p className="text-sm text-muted-foreground">Get personalized scholarship recommendations and expert guidance</p>
+            </div>
+          </div>
+          <Button 
+            onClick={() => setLocation('/student/ai-assistant')}
+            data-testid="button-ai-assistant"
+          >
+            Try Now
+          </Button>
+        </CardContent>
+      </Card>
 
       <div>
         <div className="flex items-center justify-between mb-4">

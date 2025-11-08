@@ -12,6 +12,7 @@ import { StudentDashboard } from "@/components/StudentDashboard";
 import { AdminDashboard } from "@/components/AdminDashboard";
 import { EnhancedProfile, ProfileData } from "@/components/EnhancedProfile";
 import { FilteredScholarshipList } from "@/components/FilteredScholarshipList";
+import AIAssistantPage from "@/pages/ai-assistant";
 import NotFound from "@/pages/not-found";
 
 // Create a global profile store using localStorage
@@ -145,6 +146,15 @@ function Router() {
               <div className="container mx-auto p-6">
                 <EnhancedProfile onSave={handleProfileSave} />
               </div>
+            ) : (
+              <div className="container mx-auto p-6 text-center">
+                <p>Please log in to access this page</p>
+              </div>
+            )}
+          </Route>
+          <Route path="/student/ai-assistant">
+            {user ? (
+              <AIAssistantPage />
             ) : (
               <div className="container mx-auto p-6 text-center">
                 <p>Please log in to access this page</p>
