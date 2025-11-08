@@ -25,7 +25,7 @@ export function Header({ userRole = 'student', userName = 'John Doe', onSearch, 
     <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between gap-4 px-4">
         <div className="flex items-center gap-6">
-          <Link href={userRole === 'admin' ? '/admin' : '/student'}>
+          <Link href={userRole === 'admin' ? '/admin/dashboard' : '/student/dashboard'}>
             <h1 className="text-2xl font-bold text-primary cursor-pointer hover-elevate active-elevate-2 px-2 py-1 rounded-md" data-testid="text-logo">
               ScholarHub
             </h1>
