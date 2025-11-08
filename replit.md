@@ -6,6 +6,16 @@ ScholarHub is a web-based scholarship management platform designed to connect st
 
 ## Recent Changes
 
+**November 8, 2025 - AI Scholarship Assistant**
+- Implemented intelligent scholarship matching algorithm with 100-point scoring system
+- Matching criteria: GPA (20pts), test scores (15pts), major (15pts), demographics (20pts), skills (10pts), volunteer hours (10pts), financial need bonus (10pts)
+- Built AI assistant powered by OpenAI GPT-4o-mini with student profile context
+- Created conversational chat interface with message history and quick question prompts
+- Added /student/ai-assistant route with prominent CTA card on student dashboard
+- AI provides personalized scholarship recommendations and answers student questions
+- All scoring includes proportional partial credit for missing requirements
+- Architect reviewed: passed with no blocking issues; suggested future improvements include regression tests, OpenAI quota monitoring, and chat history persistence
+
 **November 8, 2025 - Logout Functionality**
 - Implemented secure logout feature accessible from user menu dropdown in Header
 - Added logout handler that properly validates server response before clearing session
