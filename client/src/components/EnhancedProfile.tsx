@@ -13,16 +13,19 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { X, Plus, Loader2 } from 'lucide-react';
+import { X, Plus, Loader2, Edit, Eye, Camera, User as UserIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getStoredProfile, setStoredProfile } from '../App';
 import { apiRequest } from '@/lib/queryClient';
+import { ProfileCompletionIndicator } from './ProfileCompletionIndicator';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export interface ProfileData {
   // Personal
   firstName: string;
   lastName: string;
   email: string;
+  avatarUrl?: string;
   
   // Academic
   major: string;
@@ -59,6 +62,7 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
     firstName: '',
     lastName: '',
     email: '',
+    avatarUrl: '',
     major: '',
     gpa: '',
     actScore: '',
@@ -81,6 +85,9 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
 
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [originalData, setOriginalData] = useState<ProfileData | null>(null);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   // Load saved profile on mount (from API or localStorage)
   useEffect(() => {
@@ -93,6 +100,7 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
           const apiProfile = await response.json();
           if (apiProfile) {
             setFormData(apiProfile);
+            setOriginalData(apiProfile);
             setStoredProfile(apiProfile); // Sync to localStorage
             console.log('Loaded profile from API:', apiProfile);
             return;
@@ -135,8 +143,58 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
     }));
   };
 
+  const validateProfile = (): boolean => {
+    const errors: Record<string, string> = {};
+
+    // Required fields
+    if (!formData.firstName?.trim()) {
+      errors.firstName = "First name is required";
+    }
+    if (!formData.lastName?.trim()) {
+      errors.lastName = "Last name is required";
+    }
+    if (!formData.email?.trim()) {
+      errors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      errors.email = "Please enter a valid email address";
+    }
+
+    // Validate GPA range
+    if (formData.gpa && (parseFloat(formData.gpa) < 0 || parseFloat(formData.gpa) > 4.0)) {
+      errors.gpa = "GPA must be between 0.0 and 4.0";
+    }
+
+    // Validate test scores ranges
+    if (formData.actScore && (parseInt(formData.actScore) < 1 || parseInt(formData.actScore) > 36)) {
+      errors.actScore = "ACT score must be between 1 and 36";
+    }
+    if (formData.satScore && (parseInt(formData.satScore) < 400 || parseInt(formData.satScore) > 1600)) {
+      errors.satScore = "SAT score must be between 400 and 1600";
+    }
+    if (formData.lsatScore && (parseInt(formData.lsatScore) < 120 || parseInt(formData.lsatScore) > 180)) {
+      errors.lsatScore = "LSAT score must be between 120 and 180";
+    }
+    if (formData.greScore && (parseInt(formData.greScore) < 260 || parseInt(formData.greScore) > 340)) {
+      errors.greScore = "GRE score must be between 260 and 340";
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate before saving
+    if (!validateProfile()) {
+      toast({
+        title: "Validation Error",
+        description: "Please fix the errors in the form before saving.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSaving(true);
     
     try {
@@ -144,9 +202,12 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
       const response = await apiRequest('POST', '/api/profile', formData);
       const savedProfile = await response.json();
       
-      // Update localStorage
+      // Update localStorage and original data
       setStoredProfile(savedProfile);
+      setOriginalData(savedProfile);
       onSave?.(savedProfile);
+      setIsEditMode(false);
+      setValidationErrors({});
       
       toast({
         title: "Profile saved!",
@@ -163,6 +224,50 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleCancel = () => {
+    if (originalData) {
+      setFormData(originalData);
+    }
+    setIsEditMode(false);
+  };
+
+  const handleEdit = () => {
+    setOriginalData(formData);
+    setIsEditMode(true);
+  };
+
+  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Check file size (limit to 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please select an image smaller than 2MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please select an image file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result as string;
+      setFormData({ ...formData, avatarUrl: base64String });
+    };
+    reader.readAsDataURL(file);
   };
 
   // Show loading state when initially loading profile
@@ -184,12 +289,82 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold" data-testid="text-profile-title">Your Profile</h1>
-        <p className="text-muted-foreground mt-1">
-          Complete your profile to get matched with relevant scholarships
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold" data-testid="text-profile-title">Your Profile</h1>
+          <p className="text-muted-foreground mt-1">
+            Complete your profile to get matched with relevant scholarships
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {!isEditMode ? (
+            <Button type="button" onClick={handleEdit} data-testid="button-edit-profile">
+              <Edit className="mr-2 h-4 w-4" />
+              Edit Profile
+            </Button>
+          ) : (
+            <>
+              <Button type="button" variant="outline" onClick={handleCancel} data-testid="button-cancel-edit">
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSaving} data-testid="button-save-edit">
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  'Save Changes'
+                )}
+              </Button>
+            </>
+          )}
+        </div>
       </div>
+
+      <ProfileCompletionIndicator 
+        profile={formData}
+        onCompleteProfile={handleEdit}
+        variant="inline"
+      />
+
+      {/* Avatar Upload */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Profile Photo</CardTitle>
+          <CardDescription>Upload a photo to personalize your profile</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-6">
+            <Avatar className="h-24 w-24">
+              <AvatarImage src={formData.avatarUrl} alt={`${formData.firstName} ${formData.lastName}`} />
+              <AvatarFallback className="text-2xl">
+                {formData.firstName?.[0]?.toUpperCase() || <UserIcon className="h-12 w-12" />}
+                {formData.lastName?.[0]?.toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            {isEditMode ? (
+              <div className="flex-1">
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarUpload}
+                  data-testid="input-avatar-upload"
+                  className="max-w-md"
+                />
+                <p className="text-xs text-muted-foreground mt-2">
+                  Upload a photo (max 2MB). Supported formats: JPG, PNG, GIF
+                </p>
+              </div>
+            ) : (
+              <div>
+                <p className="font-medium">{formData.firstName} {formData.lastName}</p>
+                <p className="text-sm text-muted-foreground">{formData.email}</p>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Personal Information */}
       <Card>
@@ -198,39 +373,57 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
           <CardDescription>Basic details about yourself</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="firstName">First Name *</Label>
-              <Input
-                id="firstName"
-                value={formData.firstName}
-                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                data-testid="input-first-name"
-                required
-              />
+          {isEditMode ? (
+            <>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName">First Name *</Label>
+                  <Input disabled={!isEditMode}                     id="firstName"
+                    value={formData.firstName}
+                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                    data-testid="input-first-name"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lastName">Last Name *</Label>
+                  <Input disabled={!isEditMode}                     id="lastName"
+                    value={formData.lastName}
+                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                    data-testid="input-last-name"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email *</Label>
+                <Input disabled={!isEditMode}                   id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  data-testid="input-email"
+                  required
+                />
+              </div>
+            </>
+          ) : (
+            <div className="space-y-3">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <p className="text-sm text-muted-foreground">First Name</p>
+                  <p className="font-medium" data-testid="view-first-name">{formData.firstName || 'Not provided'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Last Name</p>
+                  <p className="font-medium" data-testid="view-last-name">{formData.lastName || 'Not provided'}</p>
+                </div>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Email</p>
+                <p className="font-medium" data-testid="view-email">{formData.email || 'Not provided'}</p>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="lastName">Last Name *</Label>
-              <Input
-                id="lastName"
-                value={formData.lastName}
-                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                data-testid="input-last-name"
-                required
-              />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">Email *</Label>
-            <Input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              data-testid="input-email"
-              required
-            />
-          </div>
+          )}
         </CardContent>
       </Card>
 
@@ -244,7 +437,8 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="major">Major/Field of Study</Label>
-              <Input
+              <Input 
+                disabled={!isEditMode}
                 id="major"
                 value={formData.major}
                 onChange={(e) => setFormData({ ...formData, major: e.target.value })}
@@ -254,8 +448,7 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
             </div>
             <div className="space-y-2">
               <Label htmlFor="academicYear">Academic Year</Label>
-              <Select 
-                value={formData.academicYear} 
+              <Select disabled={!isEditMode}                 value={formData.academicYear} 
                 onValueChange={(v) => setFormData({ ...formData, academicYear: v })}
               >
                 <SelectTrigger id="academicYear" data-testid="select-year">
@@ -276,8 +469,7 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="gpa">GPA (0.00 - 4.00)</Label>
-              <Input
-                id="gpa"
+              <Input disabled={!isEditMode}                 id="gpa"
                 type="number"
                 step="0.01"
                 min="0"
@@ -290,8 +482,7 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
             </div>
             <div className="space-y-2">
               <Label htmlFor="actScore">ACT Score (1-36)</Label>
-              <Input
-                id="actScore"
+              <Input disabled={!isEditMode}                 id="actScore"
                 type="number"
                 min="1"
                 max="36"
@@ -306,8 +497,7 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="satScore">SAT Score (400-1600)</Label>
-              <Input
-                id="satScore"
+              <Input disabled={!isEditMode}                 id="satScore"
                 type="number"
                 min="400"
                 max="1600"
@@ -319,8 +509,7 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
             </div>
             <div className="space-y-2">
               <Label htmlFor="lsatScore">LSAT Score (120-180)</Label>
-              <Input
-                id="lsatScore"
+              <Input disabled={!isEditMode}                 id="lsatScore"
                 type="number"
                 min="120"
                 max="180"
@@ -334,8 +523,7 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
 
           <div className="space-y-2">
             <Label htmlFor="greScore">GRE Score (260-340)</Label>
-            <Input
-              id="greScore"
+            <Input disabled={!isEditMode}               id="greScore"
               type="number"
               min="260"
               max="340"
@@ -358,8 +546,7 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="ethnicity">Race/Ethnicity</Label>
-              <Select 
-                value={formData.ethnicity} 
+              <Select disabled={!isEditMode}                 value={formData.ethnicity} 
                 onValueChange={(v) => setFormData({ ...formData, ethnicity: v })}
               >
                 <SelectTrigger id="ethnicity" data-testid="select-ethnicity">
@@ -380,8 +567,7 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
             </div>
             <div className="space-y-2">
               <Label htmlFor="gender">Gender</Label>
-              <Select 
-                value={formData.gender} 
+              <Select disabled={!isEditMode}                 value={formData.gender} 
                 onValueChange={(v) => setFormData({ ...formData, gender: v })}
               >
                 <SelectTrigger id="gender" data-testid="select-gender">
@@ -400,8 +586,7 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
 
           <div className="space-y-3">
             <div className="flex items-center space-x-2">
-              <Checkbox
-                id="firstGen"
+              <Checkbox disabled={!isEditMode}                 id="firstGen"
                 checked={formData.firstGeneration}
                 onCheckedChange={(checked) => 
                   setFormData({ ...formData, firstGeneration: checked as boolean })
@@ -413,8 +598,7 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
               </Label>
             </div>
             <div className="flex items-center space-x-2">
-              <Checkbox
-                id="veteran"
+              <Checkbox disabled={!isEditMode}                 id="veteran"
                 checked={formData.veteran}
                 onCheckedChange={(checked) => 
                   setFormData({ ...formData, veteran: checked as boolean })
@@ -426,8 +610,7 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
               </Label>
             </div>
             <div className="flex items-center space-x-2">
-              <Checkbox
-                id="disability"
+              <Checkbox disabled={!isEditMode}                 id="disability"
                 checked={formData.disability}
                 onCheckedChange={(checked) => 
                   setFormData({ ...formData, disability: checked as boolean })
@@ -452,8 +635,7 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
           <div className="space-y-2">
             <Label>Extracurricular Activities</Label>
             <div className="flex gap-2">
-              <Input
-                value={newExtracurricular}
+              <Input disabled={!isEditMode}                 value={newExtracurricular}
                 onChange={(e) => setNewExtracurricular(e.target.value)}
                 placeholder="e.g., Debate Team, Student Government"
                 data-testid="input-extracurricular"
@@ -467,7 +649,7 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
               <Button
                 type="button"
                 size="icon"
-                onClick={() => addItem('extracurriculars', newExtracurricular, setNewExtracurricular)}
+                disabled={!isEditMode} onClick={() => addItem('extracurriculars', newExtracurricular, setNewExtracurricular)}
                 data-testid="button-add-extracurricular"
               >
                 <Plus className="h-4 w-4" />
@@ -479,7 +661,7 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
                   {item}
                   <button
                     type="button"
-                    onClick={() => removeItem('extracurriculars', index)}
+                    disabled={!isEditMode} onClick={() => removeItem('extracurriculars', index)}
                     className="ml-2"
                   >
                     <X className="h-3 w-3" />
@@ -492,8 +674,7 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
           <div className="space-y-2">
             <Label>Skills & Competencies</Label>
             <div className="flex gap-2">
-              <Input
-                value={newSkill}
+              <Input disabled={!isEditMode}                 value={newSkill}
                 onChange={(e) => setNewSkill(e.target.value)}
                 placeholder="e.g., Python, Public Speaking, Research"
                 data-testid="input-skill"
@@ -507,7 +688,7 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
               <Button
                 type="button"
                 size="icon"
-                onClick={() => addItem('skills', newSkill, setNewSkill)}
+                disabled={!isEditMode} onClick={() => addItem('skills', newSkill, setNewSkill)}
                 data-testid="button-add-skill"
               >
                 <Plus className="h-4 w-4" />
@@ -519,7 +700,7 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
                   {item}
                   <button
                     type="button"
-                    onClick={() => removeItem('skills', index)}
+                    disabled={!isEditMode} onClick={() => removeItem('skills', index)}
                     className="ml-2"
                   >
                     <X className="h-3 w-3" />
@@ -532,8 +713,7 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
           <div className="space-y-2">
             <Label>Leadership Roles</Label>
             <div className="flex gap-2">
-              <Input
-                value={newLeadership}
+              <Input disabled={!isEditMode}                 value={newLeadership}
                 onChange={(e) => setNewLeadership(e.target.value)}
                 placeholder="e.g., Team Captain, Club President"
                 data-testid="input-leadership"
@@ -547,7 +727,7 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
               <Button
                 type="button"
                 size="icon"
-                onClick={() => addItem('leadershipRoles', newLeadership, setNewLeadership)}
+                disabled={!isEditMode} onClick={() => addItem('leadershipRoles', newLeadership, setNewLeadership)}
                 data-testid="button-add-leadership"
               >
                 <Plus className="h-4 w-4" />
@@ -559,7 +739,7 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
                   {item}
                   <button
                     type="button"
-                    onClick={() => removeItem('leadershipRoles', index)}
+                    disabled={!isEditMode} onClick={() => removeItem('leadershipRoles', index)}
                     className="ml-2"
                   >
                     <X className="h-3 w-3" />
@@ -571,8 +751,7 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
 
           <div className="space-y-2">
             <Label htmlFor="volunteerHours">Volunteer Hours (annually)</Label>
-            <Input
-              id="volunteerHours"
+            <Input disabled={!isEditMode}               id="volunteerHours"
               type="number"
               min="0"
               value={formData.volunteerHours}
@@ -593,8 +772,7 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="tuitionAmount">Total Tuition Amount</Label>
-            <Input
-              id="tuitionAmount"
+            <Input disabled={!isEditMode}               id="tuitionAmount"
               type="number"
               min="0"
               value={formData.tuitionAmount}
@@ -608,8 +786,7 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
           </div>
           <div className="space-y-2">
             <Label htmlFor="financialNeed">Financial Need Level</Label>
-            <Select 
-              value={formData.financialNeed} 
+            <Select disabled={!isEditMode}               value={formData.financialNeed} 
               onValueChange={(v) => setFormData({ ...formData, financialNeed: v })}
             >
               <SelectTrigger id="financialNeed" data-testid="select-financial-need">
@@ -627,18 +804,6 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
         </CardContent>
       </Card>
 
-      <div className="flex justify-end gap-4">
-        <Button type="submit" size="lg" disabled={isSaving || isLoading} data-testid="button-save-profile">
-          {isSaving ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Saving...
-            </>
-          ) : (
-            'Save Profile'
-          )}
-        </Button>
-      </div>
     </form>
   );
 }

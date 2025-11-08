@@ -36,8 +36,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         req.session.destroy(() => {});
         return res.json(null);
       }
+      
+      // For students, try to get name from their profile
+      let firstName = user.firstName;
+      let lastName = user.lastName;
+      
+      if (user.role === 'student') {
+        const profile = await storage.getStudentProfile(user.id);
+        if (profile) {
+          firstName = profile.firstName;
+          lastName = profile.lastName;
+        }
+      }
+      
       const { password, ...userWithoutPassword } = user;
-      res.json(userWithoutPassword);
+      res.json({ ...userWithoutPassword, firstName, lastName });
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ error: "Failed to fetch user" });
@@ -77,7 +90,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       req.session.userId = user.id;
 
       const { password: _, ...userWithoutPassword } = user;
-      res.json(userWithoutPassword);
+      res.json({ ...userWithoutPassword, firstName: user.firstName, lastName: user.lastName });
     } catch (error) {
       console.error("Signup error:", error);
       res.status(500).json({ error: "Failed to create account" });
@@ -105,8 +118,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       req.session.userId = user.id;
 
+      // For students, try to get name from their profile
+      let firstName = user.firstName;
+      let lastName = user.lastName;
+      
+      if (user.role === 'student') {
+        const profile = await storage.getStudentProfile(user.id);
+        if (profile) {
+          firstName = profile.firstName;
+          lastName = profile.lastName;
+        }
+      }
+
       const { password: _, ...userWithoutPassword } = user;
-      res.json(userWithoutPassword);
+      res.json({ ...userWithoutPassword, firstName, lastName });
     } catch (error) {
       console.error("Login error:", error);
       res.status(500).json({ error: "Failed to login" });

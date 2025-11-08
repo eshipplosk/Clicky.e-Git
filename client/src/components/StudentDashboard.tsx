@@ -5,10 +5,12 @@ import { Progress } from '@/components/ui/progress';
 import { Award, BookOpen, Clock, TrendingUp } from 'lucide-react';
 import { ScholarshipCard } from './ScholarshipCard';
 import { FinancialAidCalculator } from './FinancialAidCalculator';
+import { ProfileCompletionIndicator } from './ProfileCompletionIndicator';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import type { Scholarship } from '@shared/schema';
+import { useLocation } from 'wouter';
+import type { Scholarship, StudentProfile } from '@shared/schema';
 
 interface StudentDashboardProps {
   studentName?: string;
@@ -22,6 +24,7 @@ export function StudentDashboard({
   matchingScholarships = 12
 }: StudentDashboardProps) {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   const { data: scholarships = [], isLoading: isLoadingScholarships } = useQuery<Scholarship[]>({
     queryKey: ['/api/scholarships'],
@@ -29,6 +32,10 @@ export function StudentDashboard({
 
   const { data: acceptedScholarships = [] } = useQuery<Array<{ id: string }>>({
     queryKey: ['/api/scholarship-applications'],
+  });
+
+  const { data: profile } = useQuery<StudentProfile>({
+    queryKey: ['/api/profile'],
   });
 
   const acceptScholarshipMutation = useMutation({
@@ -74,16 +81,10 @@ export function StudentDashboard({
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Profile Completion</CardTitle>
-            <BookOpen className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold" data-testid="text-profile-completion">{profileCompletion}%</div>
-            <Progress value={profileCompletion} className="mt-2" />
-          </CardContent>
-        </Card>
+        <ProfileCompletionIndicator 
+          profile={profile}
+          onCompleteProfile={() => setLocation('/student/profile')}
+        />
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
@@ -108,21 +109,6 @@ export function StudentDashboard({
         </Card>
       </div>
 
-      {profileCompletion < 100 && (
-        <Card className="border-primary/20 bg-primary/5">
-          <CardContent className="pt-6">
-            <div className="flex items-start gap-4">
-              <div className="flex-1">
-                <h3 className="font-semibold">Complete your profile to unlock more scholarships</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Add more details to get better scholarship matches
-                </p>
-              </div>
-              <Button data-testid="button-complete-profile">Complete Profile</Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       <FinancialAidCalculator />
 

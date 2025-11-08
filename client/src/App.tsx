@@ -36,6 +36,9 @@ interface User {
   id: string;
   username: string;
   role: 'student' | 'admin';
+  firstName?: string;
+  lastName?: string;
+  avatarUrl?: string;
 }
 
 function Router() {
@@ -109,7 +112,7 @@ function Router() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {user && <Header userRole={user.role} userName={user.username} onLogout={handleLogout} />}
+      {user && <Header userRole={user.role} userName={user.firstName || user.username} onLogout={handleLogout} />}
       
       <main className="flex-1">
         <Switch>
@@ -118,7 +121,7 @@ function Router() {
           <Route path="/student/dashboard">
             {user ? (
               <div className="container mx-auto p-6">
-                <StudentDashboard />
+                <StudentDashboard studentName={user.firstName || user.username} />
               </div>
             ) : (
               <div className="container mx-auto p-6 text-center">

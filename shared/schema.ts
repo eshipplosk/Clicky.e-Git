@@ -8,6 +8,9 @@ export const users = pgTable("users", {
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
   role: text("role").notNull().default("student"), // 'student' or 'admin'
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  avatarUrl: text("avatar_url"),
 });
 
 export const studentProfiles = pgTable("student_profiles", {
@@ -76,6 +79,9 @@ export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
   role: true,
+  firstName: true,
+  lastName: true,
+  avatarUrl: true,
 });
 
 export const insertStudentProfileSchema = createInsertSchema(studentProfiles).omit({
