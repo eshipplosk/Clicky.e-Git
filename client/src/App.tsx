@@ -70,6 +70,26 @@ function Router() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        console.error('Logout failed:', response.status, response.statusText);
+        return;
+      }
+      
+      setUser(null);
+      queryClient.clear();
+      setLocation('/');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
+
   const handleGetStarted = () => {
     setLocation('/login');
   };
@@ -89,7 +109,7 @@ function Router() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {user && <Header userRole={user.role} />}
+      {user && <Header userRole={user.role} userName={user.username} onLogout={handleLogout} />}
       
       <main className="flex-1">
         <Switch>

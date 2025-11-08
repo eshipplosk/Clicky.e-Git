@@ -14,9 +14,10 @@ interface HeaderProps {
   userRole?: 'student' | 'admin';
   userName?: string;
   onSearch?: (query: string) => void;
+  onLogout?: () => void;
 }
 
-export function Header({ userRole = 'student', userName = 'John Doe', onSearch }: HeaderProps) {
+export function Header({ userRole = 'student', userName = 'John Doe', onSearch, onLogout }: HeaderProps) {
   const { theme, toggleTheme } = useTheme();
 
   return (
@@ -71,7 +72,7 @@ export function Header({ userRole = 'student', userName = 'John Doe', onSearch }
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
-              <DropdownMenuItem data-testid="menu-logout">
+              <DropdownMenuItem onClick={onLogout} data-testid="menu-logout">
                 Logout
               </DropdownMenuItem>
             </DropdownMenuContent>
