@@ -3,6 +3,8 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertScholarshipSchema, insertUserSchema } from "@shared/schema";
 import bcrypt from "bcrypt";
+import { getScholarshipAssistantResponse } from "./aiAssistant";
+import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware to check if user is logged in
@@ -349,6 +351,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching financial aid summary:", error);
       res.status(500).json({ error: "Failed to fetch financial aid summary" });
+    }
+  });
+
+  // AI Assistant chat endpoint
+  const chatMessageSchema = z.object({
+    messages: z.array(z.object({
+      role: z.enum(['user', 'assistant', 'system']),
+      content: z.string()
+    }))
+  });
+
+  app.post("/api/ai-assistant/chat", requireAuth, async (req, res) => {
+    try {
+      const { messages } = chatMessageSchema.parse(req.body);
+      
+      // Get student profile for context
+      const profile = await storage.getStudentProfile(req.session.userId!);
+      
+      // Get all active scholarships
+      const scholarships = await storage.getScholarships();
+      const activeScholarships = scholarships.filter(s => s.status === 'active');
+      
+      // Get AI response
+      const response = await getScholarshipAssistantResponse(
+        messages,
+        profile,
+        activeScholarships
+      );
+      
+      res.json({ message: response });
+    } catch (error: any) {
+      console.error("Error in AI assistant:", error);
+      res.status(500).json({ 
+        error: error.message || "Failed to get AI response" 
+      });
     }
   });
 
