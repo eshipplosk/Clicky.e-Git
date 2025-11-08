@@ -2,6 +2,7 @@ import { Moon, Sun, Bell, User, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useTheme } from './ThemeProvider';
+import { Link } from 'wouter';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,9 +25,11 @@ export function Header({ userRole = 'student', userName = 'John Doe', onSearch, 
     <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between gap-4 px-4">
         <div className="flex items-center gap-6">
-          <h1 className="text-2xl font-bold text-primary" data-testid="text-logo">
-            ScholarHub
-          </h1>
+          <Link href={userRole === 'admin' ? '/admin' : '/student'}>
+            <h1 className="text-2xl font-bold text-primary cursor-pointer hover-elevate active-elevate-2 px-2 py-1 rounded-md" data-testid="text-logo">
+              ScholarHub
+            </h1>
+          </Link>
           
           <div className="hidden md:flex relative w-80">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
