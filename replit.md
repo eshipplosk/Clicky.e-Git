@@ -6,6 +6,12 @@ ScholarHub is a web-based scholarship management platform designed to connect st
 
 ## Recent Changes
 
+**November 8, 2025 - Logout Functionality**
+- Implemented secure logout feature accessible from user menu dropdown in Header
+- Added logout handler that properly validates server response before clearing session
+- Clears user state, React Query cache, and redirects to home page on successful logout
+- Protected routes remain inaccessible after logout with appropriate access messages
+
 **October 30, 2025 - Financial Aid Calculator Feature**
 - Added tuition amount tracking to student profiles
 - Created scholarship applications system for students to accept/remove scholarships
