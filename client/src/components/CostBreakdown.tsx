@@ -23,13 +23,11 @@ interface CostCategory {
 
 export function CostBreakdown({ userId }: CostBreakdownProps) {
   const { data: profileData, isLoading: profileLoading } = useQuery<any>({
-    queryKey: ['/api/student-profile'],
-    enabled: !!userId,
+    queryKey: ['/api/profile'],
   });
 
   const { data: financialData, isLoading: financialLoading } = useQuery<any>({
     queryKey: ['/api/financial-aid-summary'],
-    enabled: !!userId,
   });
 
   const isLoading = profileLoading || financialLoading;
@@ -61,7 +59,8 @@ export function CostBreakdown({ userId }: CostBreakdownProps) {
   const totalCost = tuition + housing + fees + dining + books + personal + transportation;
   const totalScholarships = financialData?.totalScholarships || 0;
   const remainingBalance = totalCost - totalScholarships;
-  const coveragePercentage = totalCost > 0 ? Math.min((totalScholarships / totalCost) * 100, 100) : 0;
+  const coveragePercentage = totalCost > 0 ? (totalScholarships / totalCost) * 100 : 0;
+  const hasSurplus = totalScholarships > totalCost && totalCost > 0;
 
   const costCategories: CostCategory[] = [
     {
@@ -159,14 +158,14 @@ export function CostBreakdown({ userId }: CostBreakdownProps) {
 
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <TrendingDown className="h-4 w-4" />
-                <span>Remaining Balance</span>
+                {hasSurplus ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                <span>{hasSurplus ? 'Surplus Funding' : 'Remaining Balance'}</span>
               </div>
               <p 
                 className={`text-2xl font-bold ${remainingBalance > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-green-600 dark:text-green-400'}`}
                 data-testid="text-remaining-balance"
               >
-                ${remainingBalance > 0 ? remainingBalance.toLocaleString() : '0'}
+                {hasSurplus ? '+' : ''}${Math.abs(remainingBalance).toLocaleString()}
               </p>
             </div>
           </div>
@@ -175,12 +174,18 @@ export function CostBreakdown({ userId }: CostBreakdownProps) {
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Scholarship Coverage</span>
-              <span className="font-medium">{coveragePercentage.toFixed(1)}%</span>
+              <span className="font-medium">{Math.min(coveragePercentage, 100).toFixed(1)}%</span>
             </div>
-            <Progress value={coveragePercentage} className="h-3" data-testid="progress-coverage" />
-            {coveragePercentage >= 100 ? (
-              <p className="text-sm text-green-600 dark:text-green-400 font-medium">
-                🎉 Congratulations! Your scholarships cover all estimated costs!
+            <Progress value={Math.min(coveragePercentage, 100)} className="h-3" data-testid="progress-coverage" />
+            {hasSurplus ? (
+              <p className="text-sm text-green-600 dark:text-green-400 font-medium flex items-center gap-2">
+                <Award className="h-4 w-4" />
+                Congratulations! Your scholarships exceed your estimated costs by ${Math.abs(remainingBalance).toLocaleString()}
+              </p>
+            ) : coveragePercentage >= 100 ? (
+              <p className="text-sm text-green-600 dark:text-green-400 font-medium flex items-center gap-2">
+                <Award className="h-4 w-4" />
+                Congratulations! Your scholarships cover all estimated costs!
               </p>
             ) : (
               <p className="text-sm text-muted-foreground">
