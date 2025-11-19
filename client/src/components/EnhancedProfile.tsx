@@ -481,14 +481,14 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="actScore">ACT Score (1-36)</Label>
+              <Label htmlFor="actScore">ACT Score <span className="text-muted-foreground">(Optional, 1-36)</span></Label>
               <Input disabled={!isEditMode}                 id="actScore"
                 type="number"
                 min="1"
                 max="36"
                 value={formData.actScore}
                 onChange={(e) => setFormData({ ...formData, actScore: e.target.value })}
-                placeholder="32"
+                placeholder="Leave blank if not taken"
                 data-testid="input-act"
               />
             </div>
@@ -496,40 +496,40 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="satScore">SAT Score (400-1600)</Label>
+              <Label htmlFor="satScore">SAT Score <span className="text-muted-foreground">(Optional, 400-1600)</span></Label>
               <Input disabled={!isEditMode}                 id="satScore"
                 type="number"
                 min="400"
                 max="1600"
                 value={formData.satScore}
                 onChange={(e) => setFormData({ ...formData, satScore: e.target.value })}
-                placeholder="1450"
+                placeholder="Leave blank if not taken"
                 data-testid="input-sat"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="lsatScore">LSAT Score (120-180)</Label>
+              <Label htmlFor="lsatScore">LSAT Score <span className="text-muted-foreground">(Optional, 120-180)</span></Label>
               <Input disabled={!isEditMode}                 id="lsatScore"
                 type="number"
                 min="120"
                 max="180"
                 value={formData.lsatScore}
                 onChange={(e) => setFormData({ ...formData, lsatScore: e.target.value })}
-                placeholder="165"
+                placeholder="Leave blank if not taken"
                 data-testid="input-lsat"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="greScore">GRE Score (260-340)</Label>
+            <Label htmlFor="greScore">GRE Score <span className="text-muted-foreground">(Optional, 260-340)</span></Label>
             <Input disabled={!isEditMode}               id="greScore"
               type="number"
               min="260"
               max="340"
               value={formData.greScore}
               onChange={(e) => setFormData({ ...formData, greScore: e.target.value })}
-              placeholder="320"
+              placeholder="Leave blank if not taken"
               data-testid="input-gre"
             />
           </div>
