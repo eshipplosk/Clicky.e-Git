@@ -37,6 +37,12 @@ export const studentProfiles = pgTable("student_profiles", {
   leadershipRoles: text("leadership_roles").array(),
   financialNeed: text("financial_need"),
   tuitionAmount: integer("tuition_amount"),
+  housingCost: integer("housing_cost"),
+  feesCost: integer("fees_cost"),
+  diningCost: integer("dining_cost"),
+  booksCost: integer("books_cost"),
+  personalCost: integer("personal_cost"),
+  transportationCost: integer("transportation_cost"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
