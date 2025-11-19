@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Award, BookOpen, Clock, TrendingUp, Sparkles } from 'lucide-react';
 import { ScholarshipCard } from './ScholarshipCard';
-import { FinancialAidCalculator } from './FinancialAidCalculator';
+import { CostBreakdown } from './CostBreakdown';
 import { ProfileCompletionIndicator } from './ProfileCompletionIndicator';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
@@ -110,7 +110,7 @@ export function StudentDashboard({
       </div>
 
 
-      <FinancialAidCalculator />
+      <CostBreakdown userId={profile?.userId} />
 
       {/* AI Assistant CTA */}
       <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10">

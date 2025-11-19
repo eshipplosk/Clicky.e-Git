@@ -22,12 +22,12 @@ interface CostCategory {
 }
 
 export function CostBreakdown({ userId }: CostBreakdownProps) {
-  const { data: profileData, isLoading: profileLoading } = useQuery({
+  const { data: profileData, isLoading: profileLoading } = useQuery<any>({
     queryKey: ['/api/student-profile'],
     enabled: !!userId,
   });
 
-  const { data: financialData, isLoading: financialLoading } = useQuery({
+  const { data: financialData, isLoading: financialLoading } = useQuery<any>({
     queryKey: ['/api/financial-aid-summary'],
     enabled: !!userId,
   });
