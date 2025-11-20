@@ -52,6 +52,12 @@ export interface ProfileData {
   // Financial
   financialNeed: string;
   tuitionAmount: string;
+  housingCost: string;
+  feesCost: string;
+  diningCost: string;
+  booksCost: string;
+  personalCost: string;
+  transportationCost: string;
 }
 
 export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => void }) {
@@ -80,7 +86,13 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
     volunteerHours: '',
     leadershipRoles: [],
     financialNeed: '',
-    tuitionAmount: ''
+    tuitionAmount: '',
+    housingCost: '',
+    feesCost: '',
+    diningCost: '',
+    booksCost: '',
+    personalCost: '',
+    transportationCost: ''
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -771,19 +783,94 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="tuitionAmount">Total Tuition Amount</Label>
+            <Label htmlFor="tuitionAmount">Tuition & Fees</Label>
             <Input disabled={!isEditMode}               id="tuitionAmount"
               type="number"
               min="0"
               value={formData.tuitionAmount}
               onChange={(e) => setFormData({ ...formData, tuitionAmount: e.target.value })}
-              placeholder="50000"
+              placeholder="25000"
               data-testid="input-tuition-amount"
             />
             <p className="text-xs text-muted-foreground">
-              Enter your total yearly tuition to calculate loan eligibility after scholarships
+              Annual tuition cost for your program
             </p>
           </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="housingCost">Housing (Room & Board)</Label>
+              <Input disabled={!isEditMode}                 id="housingCost"
+                type="number"
+                min="0"
+                value={formData.housingCost}
+                onChange={(e) => setFormData({ ...formData, housingCost: e.target.value })}
+                placeholder="12000"
+                data-testid="input-housing-cost"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="feesCost">Student Fees</Label>
+              <Input disabled={!isEditMode}                 id="feesCost"
+                type="number"
+                min="0"
+                value={formData.feesCost}
+                onChange={(e) => setFormData({ ...formData, feesCost: e.target.value })}
+                placeholder="2000"
+                data-testid="input-fees-cost"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="diningCost">Meal Plan / Dining</Label>
+              <Input disabled={!isEditMode}                 id="diningCost"
+                type="number"
+                min="0"
+                value={formData.diningCost}
+                onChange={(e) => setFormData({ ...formData, diningCost: e.target.value })}
+                placeholder="5000"
+                data-testid="input-dining-cost"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="booksCost">Books & Supplies</Label>
+              <Input disabled={!isEditMode}                 id="booksCost"
+                type="number"
+                min="0"
+                value={formData.booksCost}
+                onChange={(e) => setFormData({ ...formData, booksCost: e.target.value })}
+                placeholder="1200"
+                data-testid="input-books-cost"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="personalCost">Personal Expenses</Label>
+              <Input disabled={!isEditMode}                 id="personalCost"
+                type="number"
+                min="0"
+                value={formData.personalCost}
+                onChange={(e) => setFormData({ ...formData, personalCost: e.target.value })}
+                placeholder="2000"
+                data-testid="input-personal-cost"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="transportationCost">Transportation</Label>
+              <Input disabled={!isEditMode}                 id="transportationCost"
+                type="number"
+                min="0"
+                value={formData.transportationCost}
+                onChange={(e) => setFormData({ ...formData, transportationCost: e.target.value })}
+                placeholder="1500"
+                data-testid="input-transportation-cost"
+              />
+            </div>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="financialNeed">Financial Need Level</Label>
             <Select disabled={!isEditMode}               value={formData.financialNeed} 
