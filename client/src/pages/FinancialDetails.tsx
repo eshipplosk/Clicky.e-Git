@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { DollarSign, Home, BookOpen, Utensils, Bus, User, FileText, Award, ChevronLeft } from 'lucide-react';
+import { DollarSign, Home, BookOpen, Utensils, Bus, User, FileText, Award, ChevronLeft, TrendingUp, TrendingDown, BadgeDollarSign, Landmark } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Link } from 'wouter';
@@ -58,6 +58,8 @@ export default function FinancialDetails() {
   const loans = Number(profileData?.loansAmount) || 0;
   const totalFinancialAid = totalScholarships + grants + loans;
   const remainingBalance = totalCost - totalFinancialAid;
+  const coveragePercentage = totalCost > 0 ? (totalFinancialAid / totalCost) * 100 : 0;
+  const hasSurplus = totalFinancialAid > totalCost && totalCost > 0;
 
   const costCategories: CostCategory[] = [
     {
@@ -163,6 +165,100 @@ export default function FinancialDetails() {
       </div>
 
       <div className="space-y-6">
+        {/* Summary Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Financial Overview</CardTitle>
+            <CardDescription>
+              Your estimated annual costs and scholarship coverage
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Total Cost vs Financial Aid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <TrendingUp className="h-4 w-4" />
+                  <span>Total Annual Cost</span>
+                </div>
+                <p className="text-2xl font-bold" data-testid="text-total-cost">
+                  ${totalCost.toLocaleString()}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Award className="h-4 w-4" />
+                  <span>Scholarships</span>
+                </div>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400" data-testid="text-total-scholarships">
+                  ${totalScholarships.toLocaleString()}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <BadgeDollarSign className="h-4 w-4" />
+                  <span>Grants & Aid</span>
+                </div>
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400" data-testid="text-total-grants">
+                  ${grants.toLocaleString()}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Landmark className="h-4 w-4" />
+                  <span>Loans</span>
+                </div>
+                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400" data-testid="text-total-loans">
+                  ${loans.toLocaleString()}
+                </p>
+              </div>
+            </div>
+
+            {/* Remaining Balance */}
+            <div className="pt-4 border-t">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  {hasSurplus ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                  <span>{hasSurplus ? 'Surplus Funding' : 'Remaining Balance'}</span>
+                </div>
+                <p 
+                  className={`text-2xl font-bold ${remainingBalance > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-green-600 dark:text-green-400'}`}
+                  data-testid="text-remaining-balance"
+                >
+                  {hasSurplus ? '+' : ''}${Math.abs(remainingBalance).toLocaleString()}
+                </p>
+              </div>
+            </div>
+
+            {/* Coverage Progress Bar */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Financial Aid Coverage</span>
+                <span className="font-medium">{Math.min(coveragePercentage, 100).toFixed(1)}%</span>
+              </div>
+              <Progress value={Math.min(coveragePercentage, 100)} className="h-3" data-testid="progress-coverage" />
+              {hasSurplus ? (
+                <p className="text-sm text-green-600 dark:text-green-400 font-medium flex items-center gap-2">
+                  <Award className="h-4 w-4" />
+                  Congratulations! Your financial aid exceeds your estimated costs by ${Math.abs(remainingBalance).toLocaleString()}
+                </p>
+              ) : coveragePercentage >= 100 ? (
+                <p className="text-sm text-green-600 dark:text-green-400 font-medium flex items-center gap-2">
+                  <Award className="h-4 w-4" />
+                  Congratulations! Your financial aid covers all estimated costs!
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  You need approximately ${remainingBalance.toLocaleString()} more in financial aid
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Visual Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Expense Breakdown Chart */}
