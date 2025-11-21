@@ -274,19 +274,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/profile", requireAuth, async (req, res) => {
     try {
-      // Transform empty strings to null for numeric fields
+      // Helper to convert string to number or null
+      const toNumber = (value: any) => {
+        if (value === '' || value === null || value === undefined) return null;
+        const num = Number(value);
+        return isNaN(num) ? null : num;
+      };
+
+      // Extract and convert fields, excluding id, createdAt, updatedAt
+      const { id, createdAt, updatedAt, ...bodyData } = req.body;
+      
       const cleanedData = {
-        ...req.body,
+        ...bodyData,
         userId: req.session.userId!,
-        gpa: req.body.gpa === '' ? null : req.body.gpa,
-        actScore: req.body.actScore === '' ? null : req.body.actScore,
-        satScore: req.body.satScore === '' ? null : req.body.satScore,
-        lsatScore: req.body.lsatScore === '' ? null : req.body.lsatScore,
-        greScore: req.body.greScore === '' ? null : req.body.greScore,
-        volunteerHours: req.body.volunteerHours === '' ? null : req.body.volunteerHours,
-        tuitionAmount: req.body.tuitionAmount === '' ? null : req.body.tuitionAmount,
-        grantsAmount: req.body.grantsAmount === '' ? null : req.body.grantsAmount,
-        loansAmount: req.body.loansAmount === '' ? null : req.body.loansAmount,
+        // Convert numeric fields from strings to numbers
+        gpa: toNumber(bodyData.gpa),
+        actScore: toNumber(bodyData.actScore),
+        satScore: toNumber(bodyData.satScore),
+        lsatScore: toNumber(bodyData.lsatScore),
+        greScore: toNumber(bodyData.greScore),
+        volunteerHours: toNumber(bodyData.volunteerHours),
+        tuitionAmount: toNumber(bodyData.tuitionAmount),
+        housingCost: toNumber(bodyData.housingCost),
+        feesCost: toNumber(bodyData.feesCost),
+        diningCost: toNumber(bodyData.diningCost),
+        booksCost: toNumber(bodyData.booksCost),
+        personalCost: toNumber(bodyData.personalCost),
+        transportationCost: toNumber(bodyData.transportationCost),
+        grantsAmount: toNumber(bodyData.grantsAmount),
+        loansAmount: toNumber(bodyData.loansAmount),
       };
       
       const profile = await storage.createOrUpdateStudentProfile(cleanedData);
