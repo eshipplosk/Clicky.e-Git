@@ -356,7 +356,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Compare requirements
-      const requirements = compareRequirements(scholarship, profile);
+      const requirements = compareRequirements(scholarship, profile || null);
 
       // Get documents
       const documents = await storage.getApplicationDocuments(application.id);
@@ -470,7 +470,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get AI response
       const response = await getScholarshipAssistantResponse(
         messages,
-        profile,
+        profile || null,
         activeScholarships
       );
       

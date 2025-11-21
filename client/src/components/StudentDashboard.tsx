@@ -163,7 +163,11 @@ export function StudentDashboard({
                 category={scholarship.category}
                 eligibility={scholarship.eligibility}
                 description={scholarship.description}
-                onClick={() => console.log('Scholarship clicked:', scholarship.id)}
+                onClick={() => {
+                  if (acceptedScholarshipIds.has(scholarship.id)) {
+                    setLocation(`/student/applications/${scholarship.id}/details`);
+                  }
+                }}
                 onAccept={(id) => acceptScholarshipMutation.mutate(id)}
                 isAccepted={acceptedScholarshipIds.has(scholarship.id)}
                 isAccepting={acceptScholarshipMutation.isPending}
