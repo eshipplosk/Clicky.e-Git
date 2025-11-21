@@ -48,7 +48,7 @@ export default function ScholarshipApplicationDetails() {
     requirements: RequirementCheck[];
     documentChecklist: DocumentCheck[];
   }>({
-    queryKey: ["/api/scholarship-applications", scholarshipId, "details"],
+    queryKey: [`/api/scholarship-applications/${scholarshipId}/details`],
     enabled: !!scholarshipId
   });
 
