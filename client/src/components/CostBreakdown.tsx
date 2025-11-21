@@ -7,8 +7,9 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { DollarSign, Home, BookOpen, Utensils, Bus, User, FileText, TrendingUp, TrendingDown, Award } from 'lucide-react';
+import { DollarSign, Home, BookOpen, Utensils, Bus, User, FileText, TrendingUp, TrendingDown, Award, BadgeDollarSign, Landmark } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 
 interface CostBreakdownProps {
   userId?: string;
@@ -58,9 +59,12 @@ export function CostBreakdown({ userId }: CostBreakdownProps) {
 
   const totalCost = tuition + housing + fees + dining + books + personal + transportation;
   const totalScholarships = financialData?.totalScholarships || 0;
-  const remainingBalance = totalCost - totalScholarships;
-  const coveragePercentage = totalCost > 0 ? (totalScholarships / totalCost) * 100 : 0;
-  const hasSurplus = totalScholarships > totalCost && totalCost > 0;
+  const grants = profileData?.grantsAmount || 0;
+  const loans = profileData?.loansAmount || 0;
+  const totalFinancialAid = totalScholarships + grants + loans;
+  const remainingBalance = totalCost - totalFinancialAid;
+  const coveragePercentage = totalCost > 0 ? (totalFinancialAid / totalCost) * 100 : 0;
+  const hasSurplus = totalFinancialAid > totalCost && totalCost > 0;
 
   const costCategories: CostCategory[] = [
     {
@@ -123,6 +127,24 @@ export function CostBreakdown({ userId }: CostBreakdownProps) {
     );
   }
 
+  // Prepare chart data
+  const chartData = [
+    { name: 'Tuition & Fees', value: tuition, color: 'hsl(var(--chart-1))' },
+    { name: 'Housing', value: housing, color: 'hsl(var(--chart-2))' },
+    { name: 'Student Fees', value: fees, color: 'hsl(var(--chart-3))' },
+    { name: 'Dining', value: dining, color: 'hsl(var(--chart-4))' },
+    { name: 'Books', value: books, color: 'hsl(var(--chart-5))' },
+    { name: 'Personal', value: personal, color: 'hsl(var(--primary))' },
+    { name: 'Transportation', value: transportation, color: 'hsl(var(--secondary))' },
+  ].filter(item => item.value > 0);
+
+  const financialAidData = [
+    { name: 'Scholarships', value: totalScholarships, color: 'hsl(var(--chart-1))' },
+    { name: 'Grants & Aid', value: grants, color: 'hsl(var(--chart-2))' },
+    { name: 'Loans', value: loans, color: 'hsl(var(--chart-3))' },
+    { name: 'Remaining Balance', value: Math.max(0, remainingBalance), color: 'hsl(var(--muted))' },
+  ].filter(item => item.value > 0);
+
   return (
     <div className="space-y-6">
       {/* Summary Card */}
@@ -134,8 +156,8 @@ export function CostBreakdown({ userId }: CostBreakdownProps) {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Total Cost vs Scholarships */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Total Cost vs Financial Aid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <TrendingUp className="h-4 w-4" />
@@ -149,7 +171,7 @@ export function CostBreakdown({ userId }: CostBreakdownProps) {
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Award className="h-4 w-4" />
-                <span>Total Scholarships</span>
+                <span>Scholarships</span>
               </div>
               <p className="text-2xl font-bold text-green-600 dark:text-green-400" data-testid="text-total-scholarships">
                 ${totalScholarships.toLocaleString()}
@@ -157,6 +179,29 @@ export function CostBreakdown({ userId }: CostBreakdownProps) {
             </div>
 
             <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <BadgeDollarSign className="h-4 w-4" />
+                <span>Grants & Aid</span>
+              </div>
+              <p className="text-2xl font-bold text-blue-600 dark:text-blue-400" data-testid="text-total-grants">
+                ${grants.toLocaleString()}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Landmark className="h-4 w-4" />
+                <span>Loans</span>
+              </div>
+              <p className="text-2xl font-bold text-purple-600 dark:text-purple-400" data-testid="text-total-loans">
+                ${loans.toLocaleString()}
+              </p>
+            </div>
+          </div>
+
+          {/* Remaining Balance */}
+          <div className="pt-4 border-t">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 {hasSurplus ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
                 <span>{hasSurplus ? 'Surplus Funding' : 'Remaining Balance'}</span>
@@ -173,28 +218,93 @@ export function CostBreakdown({ userId }: CostBreakdownProps) {
           {/* Coverage Progress Bar */}
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Scholarship Coverage</span>
+              <span className="text-muted-foreground">Financial Aid Coverage</span>
               <span className="font-medium">{Math.min(coveragePercentage, 100).toFixed(1)}%</span>
             </div>
             <Progress value={Math.min(coveragePercentage, 100)} className="h-3" data-testid="progress-coverage" />
             {hasSurplus ? (
               <p className="text-sm text-green-600 dark:text-green-400 font-medium flex items-center gap-2">
                 <Award className="h-4 w-4" />
-                Congratulations! Your scholarships exceed your estimated costs by ${Math.abs(remainingBalance).toLocaleString()}
+                Congratulations! Your financial aid exceeds your estimated costs by ${Math.abs(remainingBalance).toLocaleString()}
               </p>
             ) : coveragePercentage >= 100 ? (
               <p className="text-sm text-green-600 dark:text-green-400 font-medium flex items-center gap-2">
                 <Award className="h-4 w-4" />
-                Congratulations! Your scholarships cover all estimated costs!
+                Congratulations! Your financial aid covers all estimated costs!
               </p>
             ) : (
               <p className="text-sm text-muted-foreground">
-                You need approximately ${remainingBalance.toLocaleString()} more in scholarships or financial aid
+                You need approximately ${remainingBalance.toLocaleString()} more in financial aid
               </p>
             )}
           </div>
         </CardContent>
       </Card>
+
+      {/* Visual Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Expense Breakdown Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Expense Breakdown</CardTitle>
+            <CardDescription>
+              Where your money goes
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={chartData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value) => `$${Number(value).toLocaleString()}`} />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Financial Aid Sources Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Financial Aid Sources</CardTitle>
+            <CardDescription>
+              How your costs are covered
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={financialAidData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {financialAidData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value) => `$${Number(value).toLocaleString()}`} />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Detailed Cost Breakdown */}
       <Card>
