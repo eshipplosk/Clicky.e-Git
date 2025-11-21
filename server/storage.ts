@@ -1,5 +1,5 @@
 import { db } from "../db";
-import { users, studentProfiles, scholarships, scholarshipApplications, type User, type InsertUser, type Scholarship, type InsertScholarship, type StudentProfile, type InsertStudentProfile, type ScholarshipApplication, type InsertScholarshipApplication } from "@shared/schema";
+import { users, studentProfiles, scholarships, scholarshipApplications, applicationDocuments, type User, type InsertUser, type Scholarship, type InsertScholarship, type StudentProfile, type InsertStudentProfile, type ScholarshipApplication, type InsertScholarshipApplication, type ApplicationDocument, type InsertApplicationDocument } from "@shared/schema";
 import { eq, and, sql } from "drizzle-orm";
 
 export interface IStorage {
@@ -27,6 +27,12 @@ export interface IStorage {
   acceptScholarship(userId: string, scholarshipId: string): Promise<ScholarshipApplication>;
   removeScholarshipApplication(userId: string, scholarshipId: string): Promise<boolean>;
   getAcceptedScholarshipsWithDetails(userId: string): Promise<Array<Scholarship & { applicationId: string }>>;
+  getScholarshipApplication(userId: string, scholarshipId: string): Promise<ScholarshipApplication | undefined>;
+
+  // Application document methods
+  getApplicationDocuments(applicationId: string): Promise<ApplicationDocument[]>;
+  createApplicationDocument(document: InsertApplicationDocument): Promise<ApplicationDocument>;
+  updateApplicationDocument(id: string, document: Partial<InsertApplicationDocument>): Promise<ApplicationDocument | undefined>;
 }
 
 export class DbStorage implements IStorage {
@@ -173,6 +179,7 @@ export class DbStorage implements IStorage {
         skillRequirements: scholarships.skillRequirements,
         minVolunteerHours: scholarships.minVolunteerHours,
         requiresEssay: scholarships.requiresEssay,
+        requiredDocuments: scholarships.requiredDocuments,
         status: scholarships.status,
         createdAt: scholarships.createdAt,
         updatedAt: scholarships.updatedAt,
@@ -186,6 +193,33 @@ export class DbStorage implements IStorage {
       ));
     
     return result;
+  }
+
+  async getScholarshipApplication(userId: string, scholarshipId: string): Promise<ScholarshipApplication | undefined> {
+    const result = await db.select().from(scholarshipApplications)
+      .where(and(
+        eq(scholarshipApplications.userId, userId),
+        eq(scholarshipApplications.scholarshipId, scholarshipId)
+      ));
+    return result[0];
+  }
+
+  // Application document methods
+  async getApplicationDocuments(applicationId: string): Promise<ApplicationDocument[]> {
+    return await db.select().from(applicationDocuments).where(eq(applicationDocuments.applicationId, applicationId));
+  }
+
+  async createApplicationDocument(document: InsertApplicationDocument): Promise<ApplicationDocument> {
+    const result = await db.insert(applicationDocuments).values(document).returning();
+    return result[0];
+  }
+
+  async updateApplicationDocument(id: string, document: Partial<InsertApplicationDocument>): Promise<ApplicationDocument | undefined> {
+    const result = await db.update(applicationDocuments)
+      .set(document)
+      .where(eq(applicationDocuments.id, id))
+      .returning();
+    return result[0];
   }
 }
 
