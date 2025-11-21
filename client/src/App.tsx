@@ -14,6 +14,7 @@ import { EnhancedProfile, ProfileData } from "@/components/EnhancedProfile";
 import { FilteredScholarshipList } from "@/components/FilteredScholarshipList";
 import AIAssistantPage from "@/pages/ai-assistant";
 import ScholarshipApplicationDetails from "@/pages/ScholarshipApplicationDetails";
+import FinancialDetails from "@/pages/FinancialDetails";
 import NotFound from "@/pages/not-found";
 
 // Create a global profile store using localStorage
@@ -156,6 +157,15 @@ function Router() {
           <Route path="/student/ai-assistant">
             {user ? (
               <AIAssistantPage />
+            ) : (
+              <div className="container mx-auto p-6 text-center">
+                <p>Please log in to access this page</p>
+              </div>
+            )}
+          </Route>
+          <Route path="/student/financial-details">
+            {user ? (
+              <FinancialDetails />
             ) : (
               <div className="container mx-auto p-6 text-center">
                 <p>Please log in to access this page</p>

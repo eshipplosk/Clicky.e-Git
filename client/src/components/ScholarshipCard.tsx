@@ -48,9 +48,9 @@ export function ScholarshipCard({
           </h3>
           <div className="flex items-center gap-2">
             {isAccepted && (
-              <Badge variant="default" className="gap-1" data-testid={`badge-accepted-${id}`}>
+              <Badge variant="default" className="gap-1" data-testid={`badge-applied-${id}`}>
                 <Check className="h-3 w-3" />
-                Accepted
+                Applied
               </Badge>
             )}
             {matchScore !== undefined && (
