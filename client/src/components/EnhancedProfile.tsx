@@ -58,6 +58,8 @@ export interface ProfileData {
   booksCost: string;
   personalCost: string;
   transportationCost: string;
+  grantsAmount: string;
+  loansAmount: string;
 }
 
 export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => void }) {
@@ -92,7 +94,9 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
     diningCost: '',
     booksCost: '',
     personalCost: '',
-    transportationCost: ''
+    transportationCost: '',
+    grantsAmount: '',
+    loansAmount: ''
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -868,6 +872,38 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
                 placeholder="1500"
                 data-testid="input-transportation-cost"
               />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+            <div className="space-y-2">
+              <Label htmlFor="grantsAmount">Grants & Aid Received</Label>
+              <Input disabled={!isEditMode}                 id="grantsAmount"
+                type="number"
+                min="0"
+                value={formData.grantsAmount}
+                onChange={(e) => setFormData({ ...formData, grantsAmount: e.target.value })}
+                placeholder="5000"
+                data-testid="input-grants-amount"
+              />
+              <p className="text-xs text-muted-foreground">
+                Federal grants, state aid, institutional aid
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="loansAmount">Expected Loans</Label>
+              <Input disabled={!isEditMode}                 id="loansAmount"
+                type="number"
+                min="0"
+                value={formData.loansAmount}
+                onChange={(e) => setFormData({ ...formData, loansAmount: e.target.value })}
+                placeholder="3000"
+                data-testid="input-loans-amount"
+              />
+              <p className="text-xs text-muted-foreground">
+                Federal student loans you plan to take
+              </p>
             </div>
           </div>
 
