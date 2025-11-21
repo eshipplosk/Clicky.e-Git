@@ -101,7 +101,7 @@ export function ScholarshipCard({
             disabled={isAccepting}
             data-testid={`button-accept-${id}`}
           >
-            {isAccepting ? "Accepting..." : "Accept Scholarship"}
+            {isAccepting ? "Applying..." : "Apply"}
           </Button>
         )}
         <Button 
