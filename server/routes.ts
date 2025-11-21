@@ -284,6 +284,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         greScore: req.body.greScore === '' ? null : req.body.greScore,
         volunteerHours: req.body.volunteerHours === '' ? null : req.body.volunteerHours,
         tuitionAmount: req.body.tuitionAmount === '' ? null : req.body.tuitionAmount,
+        grantsAmount: req.body.grantsAmount === '' ? null : req.body.grantsAmount,
+        loansAmount: req.body.loansAmount === '' ? null : req.body.loansAmount,
       };
       
       const profile = await storage.createOrUpdateStudentProfile(cleanedData);

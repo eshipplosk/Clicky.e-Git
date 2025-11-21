@@ -49,18 +49,19 @@ export function CostBreakdown({ userId }: CostBreakdownProps) {
     );
   }
 
-  const tuition = profileData?.tuitionAmount || 0;
-  const housing = profileData?.housingCost || 0;
-  const fees = profileData?.feesCost || 0;
-  const dining = profileData?.diningCost || 0;
-  const books = profileData?.booksCost || 0;
-  const personal = profileData?.personalCost || 0;
-  const transportation = profileData?.transportationCost || 0;
+  // Convert string values to numbers (profile stores as strings)
+  const tuition = Number(profileData?.tuitionAmount) || 0;
+  const housing = Number(profileData?.housingCost) || 0;
+  const fees = Number(profileData?.feesCost) || 0;
+  const dining = Number(profileData?.diningCost) || 0;
+  const books = Number(profileData?.booksCost) || 0;
+  const personal = Number(profileData?.personalCost) || 0;
+  const transportation = Number(profileData?.transportationCost) || 0;
 
   const totalCost = tuition + housing + fees + dining + books + personal + transportation;
-  const totalScholarships = financialData?.totalScholarships || 0;
-  const grants = profileData?.grantsAmount || 0;
-  const loans = profileData?.loansAmount || 0;
+  const totalScholarships = Number(financialData?.totalScholarships) || 0;
+  const grants = Number(profileData?.grantsAmount) || 0;
+  const loans = Number(profileData?.loansAmount) || 0;
   const totalFinancialAid = totalScholarships + grants + loans;
   const remainingBalance = totalCost - totalFinancialAid;
   const coveragePercentage = totalCost > 0 ? (totalFinancialAid / totalCost) * 100 : 0;
