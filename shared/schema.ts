@@ -97,6 +97,21 @@ export const applicationDocuments = pgTable("application_documents", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const supportMessages = pgTable("support_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  studentId: varchar("student_id").notNull().references(() => users.id),
+  subject: text("subject").notNull(),
+  message: text("message").notNull(),
+  category: text("category").notNull().default("general"), // 'general', 'scholarship', 'financial', 'technical'
+  status: text("status").notNull().default("pending"), // 'pending', 'in_progress', 'answered', 'closed'
+  priority: text("priority").notNull().default("normal"), // 'low', 'normal', 'high'
+  adminId: varchar("admin_id").references(() => users.id), // Admin who responded
+  adminReply: text("admin_reply"),
+  repliedAt: timestamp("replied_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -128,6 +143,15 @@ export const insertApplicationDocumentSchema = createInsertSchema(applicationDoc
   createdAt: true,
 });
 
+export const insertSupportMessageSchema = createInsertSchema(supportMessages).omit({
+  id: true,
+  adminId: true,
+  adminReply: true,
+  repliedAt: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
@@ -142,3 +166,6 @@ export type ScholarshipApplication = typeof scholarshipApplications.$inferSelect
 
 export type InsertApplicationDocument = z.infer<typeof insertApplicationDocumentSchema>;
 export type ApplicationDocument = typeof applicationDocuments.$inferSelect;
+
+export type InsertSupportMessage = z.infer<typeof insertSupportMessageSchema>;
+export type SupportMessage = typeof supportMessages.$inferSelect;
