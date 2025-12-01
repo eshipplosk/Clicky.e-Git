@@ -12,6 +12,7 @@ import { DollarSign, Home, BookOpen, Utensils, Bus, User, FileText, Award, Chevr
 import { Skeleton } from '@/components/ui/skeleton';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Link } from 'wouter';
+import { TuitionComparison } from '@/components/TuitionComparison';
 
 interface CostCategory {
   name: string;
@@ -412,6 +413,9 @@ export default function FinancialDetails() {
             </CardContent>
           </Card>
         )}
+
+        {/* Tuition Comparison */}
+        <TuitionComparison userTuition={tuition} />
       </div>
     </div>
   );
