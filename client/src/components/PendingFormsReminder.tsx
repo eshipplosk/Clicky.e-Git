@@ -56,7 +56,11 @@ export function PendingFormsReminder() {
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => setLocation(`/student/applications/${app.scholarshipId}/details`)}
+                onClick={() => {
+                  if (app.scholarshipId) {
+                    setLocation(`/student/applications/${app.scholarshipId}/details`);
+                  }
+                }}
                 data-testid={`button-complete-${app.id}`}
               >
                 Complete
