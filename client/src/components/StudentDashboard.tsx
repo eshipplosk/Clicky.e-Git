@@ -5,6 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { Award, BookOpen, Clock, TrendingUp, Sparkles, ArrowRight, TrendingDown, BadgeDollarSign, Landmark } from 'lucide-react';
 import { ScholarshipCard } from './ScholarshipCard';
 import { ProfileCompletionIndicator } from './ProfileCompletionIndicator';
+import { MotivationalMessage } from './MotivationalMessage';
 import { Link } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
@@ -89,6 +90,8 @@ export function StudentDashboard({
         <h1 className="text-3xl font-bold" data-testid="text-welcome">Welcome back, {studentName}!</h1>
         <p className="text-muted-foreground mt-1">Here's your scholarship overview</p>
       </div>
+
+      <MotivationalMessage />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
