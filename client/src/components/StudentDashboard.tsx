@@ -6,6 +6,7 @@ import { Award, BookOpen, Clock, TrendingUp, Sparkles, ArrowRight, TrendingDown,
 import { ScholarshipCard } from './ScholarshipCard';
 import { ProfileCompletionIndicator } from './ProfileCompletionIndicator';
 import { MotivationalMessage } from './MotivationalMessage';
+import { PendingFormsReminder } from './PendingFormsReminder';
 import { Link } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
@@ -92,6 +93,8 @@ export function StudentDashboard({
       </div>
 
       <MotivationalMessage />
+
+      <PendingFormsReminder />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
