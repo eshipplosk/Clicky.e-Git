@@ -43,6 +43,8 @@ export const studentProfiles = pgTable("student_profiles", {
   booksCost: integer("books_cost"),
   personalCost: integer("personal_cost"),
   transportationCost: integer("transportation_cost"),
+  grantsAmount: integer("grants_amount"),
+  loansAmount: integer("loans_amount"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -68,6 +70,7 @@ export const scholarships = pgTable("scholarships", {
   skillRequirements: text("skill_requirements").array(),
   minVolunteerHours: integer("min_volunteer_hours"),
   requiresEssay: boolean("requires_essay").default(false),
+  requiredDocuments: text("required_documents").array(), // List of required document types
   status: text("status").notNull().default("active"), // 'active', 'draft', 'closed'
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -79,6 +82,34 @@ export const scholarshipApplications = pgTable("scholarship_applications", {
   scholarshipId: varchar("scholarship_id").notNull().references(() => scholarships.id),
   status: text("status").notNull().default("accepted"), // 'accepted', 'pending', 'declined'
   appliedAt: timestamp("applied_at").defaultNow(),
+});
+
+export const applicationDocuments = pgTable("application_documents", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  applicationId: varchar("application_id").notNull().references(() => scholarshipApplications.id),
+  documentType: text("document_type").notNull(), // e.g., 'essay', 'transcript', 'recommendation'
+  fileName: text("file_name"),
+  fileUrl: text("file_url"),
+  status: text("status").notNull().default("pending"), // 'uploaded', 'pending', 'rejected'
+  rejectionReason: text("rejection_reason"),
+  uploadedAt: timestamp("uploaded_at"),
+  deadline: timestamp("deadline"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const supportMessages = pgTable("support_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  studentId: varchar("student_id").notNull().references(() => users.id),
+  subject: text("subject").notNull(),
+  message: text("message").notNull(),
+  category: text("category").notNull().default("general"), // 'general', 'scholarship', 'financial', 'technical'
+  status: text("status").notNull().default("pending"), // 'pending', 'in_progress', 'answered', 'closed'
+  priority: text("priority").notNull().default("normal"), // 'low', 'normal', 'high'
+  adminId: varchar("admin_id").references(() => users.id), // Admin who responded
+  adminReply: text("admin_reply"),
+  repliedAt: timestamp("replied_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -107,6 +138,20 @@ export const insertScholarshipApplicationSchema = createInsertSchema(scholarship
   appliedAt: true,
 });
 
+export const insertApplicationDocumentSchema = createInsertSchema(applicationDocuments).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertSupportMessageSchema = createInsertSchema(supportMessages).omit({
+  id: true,
+  adminId: true,
+  adminReply: true,
+  repliedAt: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
@@ -118,3 +163,9 @@ export type Scholarship = typeof scholarships.$inferSelect;
 
 export type InsertScholarshipApplication = z.infer<typeof insertScholarshipApplicationSchema>;
 export type ScholarshipApplication = typeof scholarshipApplications.$inferSelect;
+
+export type InsertApplicationDocument = z.infer<typeof insertApplicationDocumentSchema>;
+export type ApplicationDocument = typeof applicationDocuments.$inferSelect;
+
+export type InsertSupportMessage = z.infer<typeof insertSupportMessageSchema>;
+export type SupportMessage = typeof supportMessages.$inferSelect;

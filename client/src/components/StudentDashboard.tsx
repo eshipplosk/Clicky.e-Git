@@ -2,10 +2,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Award, BookOpen, Clock, TrendingUp, Sparkles } from 'lucide-react';
+import { Award, BookOpen, Clock, TrendingUp, Sparkles, ArrowRight, TrendingDown, BadgeDollarSign, Landmark } from 'lucide-react';
 import { ScholarshipCard } from './ScholarshipCard';
-import { CostBreakdown } from './CostBreakdown';
 import { ProfileCompletionIndicator } from './ProfileCompletionIndicator';
+import { Link } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -38,6 +38,10 @@ export function StudentDashboard({
     queryKey: ['/api/profile'],
   });
 
+  const { data: financialData } = useQuery<any>({
+    queryKey: ['/api/financial-aid-summary'],
+  });
+
   const acceptScholarshipMutation = useMutation({
     mutationFn: async (scholarshipId: string) => {
       return await apiRequest("POST", "/api/scholarship-applications", { scholarshipId });
@@ -61,6 +65,23 @@ export function StudentDashboard({
 
   const acceptedScholarshipIds = new Set(acceptedScholarships.map(app => app.id));
   const topScholarships = scholarships.slice(0, 3);
+
+  // Calculate financial summary
+  const tuition = Number(profile?.tuitionAmount) || 0;
+  const housing = Number(profile?.housingCost) || 0;
+  const fees = Number(profile?.feesCost) || 0;
+  const dining = Number(profile?.diningCost) || 0;
+  const books = Number(profile?.booksCost) || 0;
+  const personal = Number(profile?.personalCost) || 0;
+  const transportation = Number(profile?.transportationCost) || 0;
+  const totalCost = tuition + housing + fees + dining + books + personal + transportation;
+  const totalScholarships = Number(financialData?.totalScholarships) || 0;
+  const grants = Number(profile?.grantsAmount) || 0;
+  const loans = Number(profile?.loansAmount) || 0;
+  const totalFinancialAid = totalScholarships + grants + loans;
+  const remainingBalance = totalCost - totalFinancialAid;
+  const coveragePercentage = totalCost > 0 ? (totalFinancialAid / totalCost) * 100 : 0;
+  const hasSurplus = totalFinancialAid > totalCost && totalCost > 0;
 
   return (
     <div className="space-y-6">
@@ -109,8 +130,89 @@ export function StudentDashboard({
         </Card>
       </div>
 
+      {/* Financial Overview Summary */}
+      {totalCost > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Financial Overview</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <TrendingUp className="h-4 w-4" />
+                  <span>Total Annual Cost</span>
+                </div>
+                <p className="text-2xl font-bold" data-testid="text-total-cost">
+                  ${totalCost.toLocaleString()}
+                </p>
+              </div>
 
-      <CostBreakdown userId={profile?.userId} />
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Award className="h-4 w-4" />
+                  <span>Scholarships</span>
+                </div>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400" data-testid="text-total-scholarships">
+                  ${totalScholarships.toLocaleString()}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <BadgeDollarSign className="h-4 w-4" />
+                  <span>Grants & Aid</span>
+                </div>
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400" data-testid="text-total-grants">
+                  ${grants.toLocaleString()}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Landmark className="h-4 w-4" />
+                  <span>Loans</span>
+                </div>
+                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400" data-testid="text-total-loans">
+                  ${loans.toLocaleString()}
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  {hasSurplus ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                  <span>{hasSurplus ? 'Surplus Funding' : 'Remaining Balance'}</span>
+                </div>
+                <p 
+                  className={`text-2xl font-bold ${remainingBalance > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-green-600 dark:text-green-400'}`}
+                  data-testid="text-remaining-balance"
+                >
+                  {hasSurplus ? '+' : ''}${Math.abs(remainingBalance).toLocaleString()}
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Financial Aid Coverage</span>
+                <span className="font-medium">{Math.min(coveragePercentage, 100).toFixed(1)}%</span>
+              </div>
+              <Progress value={Math.min(coveragePercentage, 100)} className="h-3" data-testid="progress-coverage" />
+            </div>
+
+            <div className="pt-4 border-t">
+              <Link href="/student/financial-details">
+                <Button className="w-full gap-2" data-testid="button-view-financial-details">
+                  View Detailed Financial Breakdown
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* AI Assistant CTA */}
       <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10">
@@ -163,7 +265,11 @@ export function StudentDashboard({
                 category={scholarship.category}
                 eligibility={scholarship.eligibility}
                 description={scholarship.description}
-                onClick={() => console.log('Scholarship clicked:', scholarship.id)}
+                onClick={() => {
+                  if (acceptedScholarshipIds.has(scholarship.id)) {
+                    setLocation(`/student/applications/${scholarship.id}/details`);
+                  }
+                }}
                 onAccept={(id) => acceptScholarshipMutation.mutate(id)}
                 isAccepted={acceptedScholarshipIds.has(scholarship.id)}
                 isAccepting={acceptScholarshipMutation.isPending}

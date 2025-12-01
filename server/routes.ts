@@ -1,10 +1,11 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertScholarshipSchema, insertUserSchema } from "@shared/schema";
+import { insertScholarshipSchema, insertUserSchema, insertApplicationDocumentSchema } from "@shared/schema";
 import bcrypt from "bcrypt";
 import { getScholarshipAssistantResponse } from "./aiAssistant";
 import { z } from "zod";
+import { compareRequirements } from "./requirementChecker";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware to check if user is logged in
@@ -273,17 +274,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/profile", requireAuth, async (req, res) => {
     try {
-      // Transform empty strings to null for numeric fields
+      // Helper to convert string to number or null
+      const toNumber = (value: any) => {
+        if (value === '' || value === null || value === undefined) return null;
+        const num = Number(value);
+        return isNaN(num) ? null : num;
+      };
+
+      // Extract and convert fields, excluding id, createdAt, updatedAt
+      const { id, createdAt, updatedAt, ...bodyData } = req.body;
+      
       const cleanedData = {
-        ...req.body,
+        ...bodyData,
         userId: req.session.userId!,
-        gpa: req.body.gpa === '' ? null : req.body.gpa,
-        actScore: req.body.actScore === '' ? null : req.body.actScore,
-        satScore: req.body.satScore === '' ? null : req.body.satScore,
-        lsatScore: req.body.lsatScore === '' ? null : req.body.lsatScore,
-        greScore: req.body.greScore === '' ? null : req.body.greScore,
-        volunteerHours: req.body.volunteerHours === '' ? null : req.body.volunteerHours,
-        tuitionAmount: req.body.tuitionAmount === '' ? null : req.body.tuitionAmount,
+        // Convert numeric fields from strings to numbers
+        gpa: toNumber(bodyData.gpa),
+        actScore: toNumber(bodyData.actScore),
+        satScore: toNumber(bodyData.satScore),
+        lsatScore: toNumber(bodyData.lsatScore),
+        greScore: toNumber(bodyData.greScore),
+        volunteerHours: toNumber(bodyData.volunteerHours),
+        tuitionAmount: toNumber(bodyData.tuitionAmount),
+        housingCost: toNumber(bodyData.housingCost),
+        feesCost: toNumber(bodyData.feesCost),
+        diningCost: toNumber(bodyData.diningCost),
+        booksCost: toNumber(bodyData.booksCost),
+        personalCost: toNumber(bodyData.personalCost),
+        transportationCost: toNumber(bodyData.transportationCost),
+        grantsAmount: toNumber(bodyData.grantsAmount),
+        loansAmount: toNumber(bodyData.loansAmount),
       };
       
       const profile = await storage.createOrUpdateStudentProfile(cleanedData);
@@ -332,6 +351,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get detailed application information with requirements and documents
+  app.get("/api/scholarship-applications/:scholarshipId/details", requireAuth, async (req, res) => {
+    try {
+      const { scholarshipId } = req.params;
+      
+      // Get scholarship
+      const scholarship = await storage.getScholarship(scholarshipId);
+      if (!scholarship) {
+        return res.status(404).json({ error: "Scholarship not found" });
+      }
+
+      // Get student profile
+      const profile = await storage.getStudentProfile(req.session.userId!);
+
+      // Get application
+      const application = await storage.getScholarshipApplication(req.session.userId!, scholarshipId);
+      if (!application) {
+        return res.status(404).json({ error: "Application not found" });
+      }
+
+      // Compare requirements
+      const requirements = compareRequirements(scholarship, profile || null);
+
+      // Get documents
+      const documents = await storage.getApplicationDocuments(application.id);
+
+      // Create document checklist from required documents
+      const requiredDocs = scholarship.requiredDocuments || [];
+      const documentChecklist = requiredDocs.map(docType => {
+        const uploadedDoc = documents.find(d => d.documentType === docType);
+        return {
+          documentType: docType,
+          status: uploadedDoc?.status || 'pending',
+          fileName: uploadedDoc?.fileName || null,
+          rejectionReason: uploadedDoc?.rejectionReason || null,
+          uploadedAt: uploadedDoc?.uploadedAt || null,
+          deadline: uploadedDoc?.deadline || null,
+          id: uploadedDoc?.id || null
+        };
+      });
+
+      res.json({
+        scholarship,
+        application,
+        profile,
+        requirements,
+        documentChecklist
+      });
+    } catch (error) {
+      console.error("Error fetching application details:", error);
+      res.status(500).json({ error: "Failed to fetch application details" });
+    }
+  });
+
+  // Get documents for an application
+  app.get("/api/application-documents/:applicationId", requireAuth, async (req, res) => {
+    try {
+      const documents = await storage.getApplicationDocuments(req.params.applicationId);
+      res.json(documents);
+    } catch (error) {
+      console.error("Error fetching application documents:", error);
+      res.status(500).json({ error: "Failed to fetch application documents" });
+    }
+  });
+
+  // Create or update application document
+  app.post("/api/application-documents", requireAuth, async (req, res) => {
+    try {
+      const validatedData = insertApplicationDocumentSchema.parse(req.body);
+      const document = await storage.createApplicationDocument(validatedData);
+      res.json(document);
+    } catch (error) {
+      console.error("Error creating application document:", error);
+      res.status(500).json({ error: "Failed to create application document" });
+    }
+  });
+
+  // Update application document
+  app.patch("/api/application-documents/:id", requireAuth, async (req, res) => {
+    try {
+      const document = await storage.updateApplicationDocument(req.params.id, req.body);
+      if (!document) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+      res.json(document);
+    } catch (error) {
+      console.error("Error updating application document:", error);
+      res.status(500).json({ error: "Failed to update application document" });
+    }
+  });
+
   // Financial aid summary route
   app.get("/api/financial-aid-summary", requireAuth, async (req, res) => {
     try {
@@ -376,7 +486,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get AI response
       const response = await getScholarshipAssistantResponse(
         messages,
-        profile,
+        profile || null,
         activeScholarships
       );
       

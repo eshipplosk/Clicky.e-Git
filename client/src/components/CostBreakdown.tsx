@@ -6,19 +6,14 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { DollarSign, Home, BookOpen, Utensils, Bus, User, FileText, TrendingUp, TrendingDown, Award } from 'lucide-react';
+import { TrendingUp, TrendingDown, Award, BadgeDollarSign, Landmark, ArrowRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Link } from 'wouter';
 
 interface CostBreakdownProps {
   userId?: string;
-}
-
-interface CostCategory {
-  name: string;
-  amount: number;
-  icon: React.ReactNode;
-  color: string;
 }
 
 export function CostBreakdown({ userId }: CostBreakdownProps) {
@@ -48,70 +43,30 @@ export function CostBreakdown({ userId }: CostBreakdownProps) {
     );
   }
 
-  const tuition = profileData?.tuitionAmount || 0;
-  const housing = profileData?.housingCost || 0;
-  const fees = profileData?.feesCost || 0;
-  const dining = profileData?.diningCost || 0;
-  const books = profileData?.booksCost || 0;
-  const personal = profileData?.personalCost || 0;
-  const transportation = profileData?.transportationCost || 0;
+  // Convert string values to numbers (profile stores as strings)
+  const tuition = Number(profileData?.tuitionAmount) || 0;
+  const housing = Number(profileData?.housingCost) || 0;
+  const fees = Number(profileData?.feesCost) || 0;
+  const dining = Number(profileData?.diningCost) || 0;
+  const books = Number(profileData?.booksCost) || 0;
+  const personal = Number(profileData?.personalCost) || 0;
+  const transportation = Number(profileData?.transportationCost) || 0;
 
   const totalCost = tuition + housing + fees + dining + books + personal + transportation;
-  const totalScholarships = financialData?.totalScholarships || 0;
-  const remainingBalance = totalCost - totalScholarships;
-  const coveragePercentage = totalCost > 0 ? (totalScholarships / totalCost) * 100 : 0;
-  const hasSurplus = totalScholarships > totalCost && totalCost > 0;
+  const totalScholarships = Number(financialData?.totalScholarships) || 0;
+  const grants = Number(profileData?.grantsAmount) || 0;
+  const loans = Number(profileData?.loansAmount) || 0;
+  const totalFinancialAid = totalScholarships + grants + loans;
+  const remainingBalance = totalCost - totalFinancialAid;
+  const coveragePercentage = totalCost > 0 ? (totalFinancialAid / totalCost) * 100 : 0;
+  const hasSurplus = totalFinancialAid > totalCost && totalCost > 0;
 
-  const costCategories: CostCategory[] = [
-    {
-      name: 'Tuition & Fees',
-      amount: tuition,
-      icon: <FileText className="h-5 w-5" />,
-      color: 'text-blue-600 dark:text-blue-400',
-    },
-    {
-      name: 'Housing (Room & Board)',
-      amount: housing,
-      icon: <Home className="h-5 w-5" />,
-      color: 'text-green-600 dark:text-green-400',
-    },
-    {
-      name: 'Student Fees',
-      amount: fees,
-      icon: <DollarSign className="h-5 w-5" />,
-      color: 'text-purple-600 dark:text-purple-400',
-    },
-    {
-      name: 'Meal Plan / Dining',
-      amount: dining,
-      icon: <Utensils className="h-5 w-5" />,
-      color: 'text-orange-600 dark:text-orange-400',
-    },
-    {
-      name: 'Books & Supplies',
-      amount: books,
-      icon: <BookOpen className="h-5 w-5" />,
-      color: 'text-indigo-600 dark:text-indigo-400',
-    },
-    {
-      name: 'Personal Expenses',
-      amount: personal,
-      icon: <User className="h-5 w-5" />,
-      color: 'text-pink-600 dark:text-pink-400',
-    },
-    {
-      name: 'Transportation',
-      amount: transportation,
-      icon: <Bus className="h-5 w-5" />,
-      color: 'text-teal-600 dark:text-teal-400',
-    },
-  ].filter(category => category.amount > 0);
 
   if (totalCost === 0) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Cost Breakdown</CardTitle>
+          <CardTitle>Financial Overview</CardTitle>
           <CardDescription>
             Complete your profile with estimated costs to see your financial breakdown
           </CardDescription>
@@ -124,9 +79,7 @@ export function CostBreakdown({ userId }: CostBreakdownProps) {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Summary Card */}
-      <Card>
+    <Card>
         <CardHeader>
           <CardTitle>Financial Overview</CardTitle>
           <CardDescription>
@@ -134,8 +87,8 @@ export function CostBreakdown({ userId }: CostBreakdownProps) {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Total Cost vs Scholarships */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Total Cost vs Financial Aid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <TrendingUp className="h-4 w-4" />
@@ -149,7 +102,7 @@ export function CostBreakdown({ userId }: CostBreakdownProps) {
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Award className="h-4 w-4" />
-                <span>Total Scholarships</span>
+                <span>Scholarships</span>
               </div>
               <p className="text-2xl font-bold text-green-600 dark:text-green-400" data-testid="text-total-scholarships">
                 ${totalScholarships.toLocaleString()}
@@ -157,6 +110,29 @@ export function CostBreakdown({ userId }: CostBreakdownProps) {
             </div>
 
             <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <BadgeDollarSign className="h-4 w-4" />
+                <span>Grants & Aid</span>
+              </div>
+              <p className="text-2xl font-bold text-blue-600 dark:text-blue-400" data-testid="text-total-grants">
+                ${grants.toLocaleString()}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Landmark className="h-4 w-4" />
+                <span>Loans</span>
+              </div>
+              <p className="text-2xl font-bold text-purple-600 dark:text-purple-400" data-testid="text-total-loans">
+                ${loans.toLocaleString()}
+              </p>
+            </div>
+          </div>
+
+          {/* Remaining Balance */}
+          <div className="pt-4 border-t">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 {hasSurplus ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
                 <span>{hasSurplus ? 'Surplus Funding' : 'Remaining Balance'}</span>
@@ -173,117 +149,37 @@ export function CostBreakdown({ userId }: CostBreakdownProps) {
           {/* Coverage Progress Bar */}
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Scholarship Coverage</span>
+              <span className="text-muted-foreground">Financial Aid Coverage</span>
               <span className="font-medium">{Math.min(coveragePercentage, 100).toFixed(1)}%</span>
             </div>
             <Progress value={Math.min(coveragePercentage, 100)} className="h-3" data-testid="progress-coverage" />
             {hasSurplus ? (
               <p className="text-sm text-green-600 dark:text-green-400 font-medium flex items-center gap-2">
                 <Award className="h-4 w-4" />
-                Congratulations! Your scholarships exceed your estimated costs by ${Math.abs(remainingBalance).toLocaleString()}
+                Congratulations! Your financial aid exceeds your estimated costs by ${Math.abs(remainingBalance).toLocaleString()}
               </p>
             ) : coveragePercentage >= 100 ? (
               <p className="text-sm text-green-600 dark:text-green-400 font-medium flex items-center gap-2">
                 <Award className="h-4 w-4" />
-                Congratulations! Your scholarships cover all estimated costs!
+                Congratulations! Your financial aid covers all estimated costs!
               </p>
             ) : (
               <p className="text-sm text-muted-foreground">
-                You need approximately ${remainingBalance.toLocaleString()} more in scholarships or financial aid
+                You need approximately ${remainingBalance.toLocaleString()} more in financial aid
               </p>
             )}
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Detailed Cost Breakdown */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Cost Breakdown</CardTitle>
-          <CardDescription>
-            Detailed breakdown of your estimated annual expenses
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {costCategories.map((category, index) => {
-            const percentage = (category.amount / totalCost) * 100;
-            return (
-              <div key={index} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className={category.color}>{category.icon}</div>
-                    <span className="font-medium">{category.name}</span>
-                  </div>
-                  <span className="font-semibold">${category.amount.toLocaleString()}</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Progress value={percentage} className="h-2 flex-1" />
-                  <span className="text-sm text-muted-foreground w-12 text-right">
-                    {percentage.toFixed(0)}%
-                  </span>
-                </div>
-              </div>
-            );
-          })}
-
-          {/* Total */}
+          {/* View Details Button */}
           <div className="pt-4 border-t">
-            <div className="flex items-center justify-between font-bold text-lg">
-              <span>Total Annual Cost</span>
-              <span data-testid="text-breakdown-total">${totalCost.toLocaleString()}</span>
-            </div>
+            <Link href="/student/financial-details">
+              <Button className="w-full gap-2" data-testid="button-view-financial-details">
+                View Detailed Financial Breakdown
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
           </div>
         </CardContent>
       </Card>
-
-      {/* Financing Options */}
-      {remainingBalance > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>How to Cover Remaining Costs</CardTitle>
-            <CardDescription>
-              Options to cover your ${remainingBalance.toLocaleString()} remaining balance
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-start gap-3">
-              <div className="bg-primary/10 p-2 rounded-md">
-                <Award className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="font-medium">Apply for More Scholarships</p>
-                <p className="text-sm text-muted-foreground">
-                  Browse available scholarships to find additional funding opportunities
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3">
-              <div className="bg-primary/10 p-2 rounded-md">
-                <FileText className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="font-medium">Federal Student Loans</p>
-                <p className="text-sm text-muted-foreground">
-                  Complete FAFSA to access federal student loan programs
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3">
-              <div className="bg-primary/10 p-2 rounded-md">
-                <DollarSign className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="font-medium">Work-Study Programs</p>
-                <p className="text-sm text-muted-foreground">
-                  Part-time campus employment to help cover expenses
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
   );
 }

@@ -1,6 +1,6 @@
 import { db } from "../db";
-import { users, studentProfiles, scholarships, scholarshipApplications, type User, type InsertUser, type Scholarship, type InsertScholarship, type StudentProfile, type InsertStudentProfile, type ScholarshipApplication, type InsertScholarshipApplication } from "@shared/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { users, studentProfiles, scholarships, scholarshipApplications, applicationDocuments, supportMessages, type User, type InsertUser, type Scholarship, type InsertScholarship, type StudentProfile, type InsertStudentProfile, type ScholarshipApplication, type InsertScholarshipApplication, type ApplicationDocument, type InsertApplicationDocument, type SupportMessage, type InsertSupportMessage } from "@shared/schema";
+import { eq, and, sql, desc } from "drizzle-orm";
 
 export interface IStorage {
   // User methods
@@ -27,6 +27,20 @@ export interface IStorage {
   acceptScholarship(userId: string, scholarshipId: string): Promise<ScholarshipApplication>;
   removeScholarshipApplication(userId: string, scholarshipId: string): Promise<boolean>;
   getAcceptedScholarshipsWithDetails(userId: string): Promise<Array<Scholarship & { applicationId: string }>>;
+  getScholarshipApplication(userId: string, scholarshipId: string): Promise<ScholarshipApplication | undefined>;
+
+  // Application document methods
+  getApplicationDocuments(applicationId: string): Promise<ApplicationDocument[]>;
+  createApplicationDocument(document: InsertApplicationDocument): Promise<ApplicationDocument>;
+  updateApplicationDocument(id: string, document: Partial<InsertApplicationDocument>): Promise<ApplicationDocument | undefined>;
+
+  // Support message methods
+  getSupportMessages(studentId: string): Promise<SupportMessage[]>;
+  getAllSupportMessages(): Promise<SupportMessage[]>;
+  getSupportMessage(id: string): Promise<SupportMessage | undefined>;
+  createSupportMessage(message: InsertSupportMessage): Promise<SupportMessage>;
+  replySupportMessage(id: string, adminId: string, adminReply: string): Promise<SupportMessage | undefined>;
+  updateSupportMessageStatus(id: string, status: string): Promise<SupportMessage | undefined>;
 }
 
 export class DbStorage implements IStorage {
@@ -173,6 +187,7 @@ export class DbStorage implements IStorage {
         skillRequirements: scholarships.skillRequirements,
         minVolunteerHours: scholarships.minVolunteerHours,
         requiresEssay: scholarships.requiresEssay,
+        requiredDocuments: scholarships.requiredDocuments,
         status: scholarships.status,
         createdAt: scholarships.createdAt,
         updatedAt: scholarships.updatedAt,
@@ -186,6 +201,77 @@ export class DbStorage implements IStorage {
       ));
     
     return result;
+  }
+
+  async getScholarshipApplication(userId: string, scholarshipId: string): Promise<ScholarshipApplication | undefined> {
+    const result = await db.select().from(scholarshipApplications)
+      .where(and(
+        eq(scholarshipApplications.userId, userId),
+        eq(scholarshipApplications.scholarshipId, scholarshipId)
+      ));
+    return result[0];
+  }
+
+  // Application document methods
+  async getApplicationDocuments(applicationId: string): Promise<ApplicationDocument[]> {
+    return await db.select().from(applicationDocuments).where(eq(applicationDocuments.applicationId, applicationId));
+  }
+
+  async createApplicationDocument(document: InsertApplicationDocument): Promise<ApplicationDocument> {
+    const result = await db.insert(applicationDocuments).values(document).returning();
+    return result[0];
+  }
+
+  async updateApplicationDocument(id: string, document: Partial<InsertApplicationDocument>): Promise<ApplicationDocument | undefined> {
+    const result = await db.update(applicationDocuments)
+      .set(document)
+      .where(eq(applicationDocuments.id, id))
+      .returning();
+    return result[0];
+  }
+
+  // Support message methods
+  async getSupportMessages(studentId: string): Promise<SupportMessage[]> {
+    return await db.select().from(supportMessages)
+      .where(eq(supportMessages.studentId, studentId))
+      .orderBy(desc(supportMessages.createdAt));
+  }
+
+  async getAllSupportMessages(): Promise<SupportMessage[]> {
+    return await db.select().from(supportMessages)
+      .orderBy(desc(supportMessages.createdAt));
+  }
+
+  async getSupportMessage(id: string): Promise<SupportMessage | undefined> {
+    const result = await db.select().from(supportMessages).where(eq(supportMessages.id, id));
+    return result[0];
+  }
+
+  async createSupportMessage(message: InsertSupportMessage): Promise<SupportMessage> {
+    const result = await db.insert(supportMessages).values(message).returning();
+    return result[0];
+  }
+
+  async replySupportMessage(id: string, adminId: string, adminReply: string): Promise<SupportMessage | undefined> {
+    const result = await db.update(supportMessages)
+      .set({ 
+        adminId, 
+        adminReply, 
+        status: "answered",
+        repliedAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(supportMessages.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async updateSupportMessageStatus(id: string, status: string): Promise<SupportMessage | undefined> {
+    const result = await db.update(supportMessages)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(supportMessages.id, id))
+      .returning();
+    return result[0];
   }
 }
 
