@@ -10,7 +10,26 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
+import { useMemo } from 'react';
 import type { Scholarship, StudentProfile } from '@shared/schema';
+
+const MOTIVATIONAL_QUOTES = [
+  "Your education is the most valuable investment you can make in yourself.",
+  "Every scholarship you earn is a step closer to your dreams.",
+  "Success is not final, failure is not fatal: it is the courage to continue that counts.",
+  "Your future is created by what you do today, not tomorrow.",
+  "The only impossible journey is the one you never begin.",
+  "Education is the passport to the future, for tomorrow belongs to those who prepare for it today.",
+  "You have within you right now, everything you need to deal with whatever the world can throw at you.",
+  "Believe in yourself and all that you are; know that there is something inside you greater than any obstacle.",
+  "The best time to plant a tree was 20 years ago. The second best time is now.",
+  "Don't watch the clock; do what it does. Keep going.",
+  "Your limitations—it's only your imagination. No boundaries exist but the ones you draw for yourself.",
+  "Strive for progress, not perfection.",
+  "The future depends on what you do today.",
+  "You are capable of amazing things.",
+  "Your potential is limitless when you believe in yourself."
+];
 
 interface StudentDashboardProps {
   studentName?: string;
@@ -25,6 +44,10 @@ export function StudentDashboard({
 }: StudentDashboardProps) {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+
+  const randomQuote = useMemo(() => {
+    return MOTIVATIONAL_QUOTES[Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length)];
+  }, []);
 
   const { data: scholarships = [], isLoading: isLoadingScholarships } = useQuery<Scholarship[]>({
     queryKey: ['/api/scholarships'],
@@ -89,6 +112,14 @@ export function StudentDashboard({
         <h1 className="text-3xl font-bold" data-testid="text-welcome">Welcome back, {studentName}!</h1>
         <p className="text-muted-foreground mt-1">Here's your scholarship overview</p>
       </div>
+
+      <Card className="border-l-4 border-l-primary bg-gradient-to-r from-primary/5 to-transparent">
+        <CardContent className="p-4">
+          <p className="text-sm italic text-muted-foreground">
+            "{randomQuote}"
+          </p>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
