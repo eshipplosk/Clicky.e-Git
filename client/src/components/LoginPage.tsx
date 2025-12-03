@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { GraduationCap, LogIn, UserPlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import logoImage from '@assets/Mesa_de_trabajo_1_1764790875988.png';
 
 interface LoginPageProps {
   onLogin: (user: any) => void;
@@ -59,8 +60,9 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-primary/10 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 flex flex-col items-center">
-          <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary mb-2">
-            <GraduationCap className="h-6 w-6 text-primary-foreground" />
+          <img src={logoImage} alt="Clicky.e" className="h-12 mb-4" style={{ width: 'auto' }} />
+          <div className="flex items-center justify-center w-10 h-10 rounded-full mb-2" style={{ backgroundColor: 'hsl(var(--brand-yellow))' }}>
+            <GraduationCap className="h-5 w-5" style={{ color: '#000' }} />
           </div>
           <CardTitle className="text-2xl font-bold text-center">
             {isSignup ? 'Create Account' : 'Welcome Back'}

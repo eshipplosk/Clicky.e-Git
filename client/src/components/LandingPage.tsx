@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { GraduationCap, Search, Award, TrendingUp, Users, Shield } from 'lucide-react';
+import logoImage from '@assets/Mesa_de_trabajo_1_1764790875988.png';
 
 interface LandingPageProps {
   onGetStarted?: () => void;
@@ -54,7 +55,10 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
         <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
         <div className="container mx-auto px-4 py-20 relative">
           <div className="max-w-4xl mx-auto text-center space-y-6">
-            <Badge className="mx-auto" data-testid="badge-hero">
+            <div className="flex justify-center mb-4">
+              <img src={logoImage} alt="Clicky.e" className="h-16" style={{ width: 'auto' }} />
+            </div>
+            <Badge className="mx-auto" style={{ backgroundColor: 'hsl(var(--brand-yellow))', color: '#000' }} data-testid="badge-hero">
               Scholarship Platform
             </Badge>
             <h1 className="text-5xl md:text-6xl font-bold tracking-tight" data-testid="text-hero-title">
@@ -114,8 +118,8 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
               <Card key={index} className="hover-elevate transition-all" data-testid={`feature-card-${index}`}>
                 <CardHeader>
                   <div className="mb-2">
-                    <div className="p-2 bg-primary/10 rounded-lg w-fit">
-                      <Icon className="h-6 w-6 text-primary" />
+                    <div className="p-2 rounded-lg w-fit" style={{ backgroundColor: 'hsl(var(--brand-yellow) / 0.15)' }}>
+                      <Icon className="h-6 w-6" style={{ color: 'hsl(var(--brand-yellow))' }} />
                     </div>
                   </div>
                   <CardTitle>{feature.title}</CardTitle>
