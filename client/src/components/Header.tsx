@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useTheme } from './ThemeProvider';
 import { Link } from 'wouter';
+import logoImage from '@assets/Mesa_de_trabajo_1_1764790875988.png';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,9 +27,13 @@ export function Header({ userRole = 'student', userName = 'John Doe', onSearch, 
       <div className="container mx-auto flex h-16 items-center justify-between gap-4 px-4">
         <div className="flex items-center gap-6">
           <Link href={userRole === 'admin' ? '/admin/dashboard' : '/student/dashboard'}>
-            <h1 className="text-2xl font-bold text-primary cursor-pointer hover-elevate active-elevate-2 px-2 py-1 rounded-md" data-testid="text-logo">
-              ScholarHub
-            </h1>
+            <img 
+              src={logoImage} 
+              alt="Clicky.e" 
+              className="h-12 cursor-pointer hover-elevate active-elevate-2 rounded-md" 
+              style={{ width: 'auto' }}
+              data-testid="text-logo"
+            />
           </Link>
           
           <div className="hidden md:flex relative w-80">
