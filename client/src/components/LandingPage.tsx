@@ -55,12 +55,9 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
         <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
         <div className="container mx-auto px-4 py-20 relative">
           <div className="max-w-4xl mx-auto text-center space-y-6">
-            <div className="flex justify-center mb-4">
+            <div className="flex justify-center mb-6">
               <img src={logoImage} alt="Clicky.e" className="h-16" style={{ width: 'auto' }} />
             </div>
-            <Badge className="mx-auto" style={{ backgroundColor: 'hsl(var(--brand-yellow))', color: '#000' }} data-testid="badge-hero">
-              Scholarship Platform
-            </Badge>
             <h1 className="text-5xl md:text-6xl font-bold tracking-tight" data-testid="text-hero-title">
               Find Your Path to <span className="text-primary">Scholarship Success</span>
             </h1>

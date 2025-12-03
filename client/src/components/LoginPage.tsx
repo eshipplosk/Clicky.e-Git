@@ -60,10 +60,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-primary/10 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 flex flex-col items-center">
-          <img src={logoImage} alt="Clicky.e" className="h-12 mb-4" style={{ width: 'auto' }} />
-          <div className="flex items-center justify-center w-10 h-10 rounded-full mb-2" style={{ backgroundColor: 'hsl(var(--brand-yellow))' }}>
-            <GraduationCap className="h-5 w-5" style={{ color: '#000' }} />
-          </div>
+          <img src={logoImage} alt="Clicky.e" className="h-12 mb-6" style={{ width: 'auto' }} />
           <CardTitle className="text-2xl font-bold text-center">
             {isSignup ? 'Create Account' : 'Welcome Back'}
           </CardTitle>
