@@ -27,10 +27,13 @@ export function Header({ userRole = 'student', userName = 'John Doe', onSearch, 
       <div className="container mx-auto flex h-16 items-center justify-between gap-4 px-4">
         <div className="flex items-center gap-6">
           <Link href={userRole === 'admin' ? '/admin/dashboard' : '/student/dashboard'}>
-            <div className="flex items-center gap-2 cursor-pointer hover-elevate active-elevate-2 px-2 py-1 rounded-md" data-testid="text-logo">
-              <img src={logoImage} alt="Clicky.e" className="h-8 w-8" />
-              <h1 className="text-2xl font-bold text-primary">Clicky.e</h1>
-            </div>
+            <img 
+              src={logoImage} 
+              alt="Clicky.e" 
+              className="h-12 cursor-pointer hover-elevate active-elevate-2 rounded-md" 
+              style={{ width: 'auto' }}
+              data-testid="text-logo"
+            />
           </Link>
           
           <div className="hidden md:flex relative w-80">
