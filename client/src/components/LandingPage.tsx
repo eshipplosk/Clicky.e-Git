@@ -158,7 +158,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
       <footer className="border-t py-12">
         <div className="container mx-auto px-4">
           <div className="text-center text-sm text-muted-foreground">
-            <p data-testid="text-footer">© 2025 ScholarHub. All rights reserved.</p>
+            <p data-testid="text-footer">© 2025 Clicky.e. All rights reserved.</p>
           </div>
         </div>
       </footer>
