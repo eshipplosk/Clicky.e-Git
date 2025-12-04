@@ -353,6 +353,8 @@ export function StudentDashboard({
                 onClick={() => {
                   if (acceptedScholarshipIds.has(scholarship.id)) {
                     setLocation(`/student/applications/${scholarship.id}/details`);
+                  } else {
+                    setLocation(`/student/scholarships/${scholarship.id}`);
                   }
                 }}
                 onAccept={(id) => acceptScholarshipMutation.mutate(id)}

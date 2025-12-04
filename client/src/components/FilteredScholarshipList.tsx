@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useLocation } from 'wouter';
 import { ScholarshipCard } from './ScholarshipCard';
 import { ScholarshipFilters, FilterCriteria } from './ScholarshipFilters';
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,7 @@ interface Scholarship {
 }
 
 export function FilteredScholarshipList() {
+  const [, setLocation] = useLocation();
   const [userProfile, setUserProfile] = useState<ProfileData | undefined>(getStoredProfile());
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<FilterCriteria>({});
@@ -385,17 +387,14 @@ export function FilteredScholarshipList() {
       )}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {filteredScholarships.map((scholarship) => {
-          console.log(`Scholarship ${scholarship.id} - matchScore:`, scholarship.matchScore);
-          return (
-            <ScholarshipCard
-              key={scholarship.id}
-              {...scholarship}
-              matchScore={scholarship.matchScore}
-              onClick={() => console.log('Scholarship clicked:', scholarship.id)}
-            />
-          );
-        })}
+        {filteredScholarships.map((scholarship) => (
+          <ScholarshipCard
+            key={scholarship.id}
+            {...scholarship}
+            matchScore={scholarship.matchScore}
+            onClick={() => setLocation(`/student/scholarships/${scholarship.id}`)}
+          />
+        ))}
       </div>
 
       {filteredScholarships.length === 0 && (

@@ -15,6 +15,7 @@ import { EnhancedProfile, ProfileData } from "@/components/EnhancedProfile";
 import { FilteredScholarshipList } from "@/components/FilteredScholarshipList";
 import AIAssistantPage from "@/pages/ai-assistant";
 import ScholarshipApplicationDetails from "@/pages/ScholarshipApplicationDetails";
+import ScholarshipDetails from "@/pages/ScholarshipDetails";
 import FinancialDetails from "@/pages/FinancialDetails";
 import MyScholarships from "@/pages/MyScholarships";
 import NotFound from "@/pages/not-found";
@@ -192,6 +193,15 @@ function Router() {
           <Route path="/student/applications/:scholarshipId/details">
             {user ? (
               <ScholarshipApplicationDetails />
+            ) : (
+              <div className="container mx-auto p-6 text-center">
+                <p>Please log in to access this page</p>
+              </div>
+            )}
+          </Route>
+          <Route path="/student/scholarships/:id">
+            {user ? (
+              <ScholarshipDetails />
             ) : (
               <div className="container mx-auto p-6 text-center">
                 <p>Please log in to access this page</p>
