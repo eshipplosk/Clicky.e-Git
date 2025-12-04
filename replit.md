@@ -6,6 +6,20 @@ ScholarHub is a web-based scholarship management platform designed to connect st
 
 ## Recent Changes
 
+**December 4, 2025 - Application Progress Bar**
+- Created visual status bar showing students their progress through the scholarship application process
+- 7 clearly labeled stages: Account Created, Profile Completed, Application Started, Documents Uploaded, Application Submitted, Under Review, Decision Made
+- Horizontal progress bar with connected stage indicators that fill/highlight as students advance
+- Stage determination logic based on profile completion, application status, and document upload status
+- Three component variants:
+  - ApplicationProgressBar: Full 7-stage visual bar with labels and descriptions
+  - OverallProgressBar: Simplified progress bar showing overall application journey progress percentage
+  - MiniProgressIndicator: Compact dot-based indicator for scholarship cards
+- Color coding: completed stages (primary), current stage (highlighted with ring), pending stages (muted), decision stage (green for approved, red for not selected)
+- Real-time updates via React Query data dependencies
+- Integrated into MyScholarships page (overall bar + mini indicators per scholarship) and ScholarshipApplicationDetails page (full progress bar)
+- Component file: client/src/components/ApplicationProgressBar.tsx
+
 **December 4, 2025 - Issue-Based Notification System**
 - Created comprehensive notification system to identify and alert students about actionable issues
 - Database schema: notifications table with type, title, message, priority, action links, resolution status, expiration, and metadata
