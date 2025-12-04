@@ -6,6 +6,20 @@ ScholarHub is a web-based scholarship management platform designed to connect st
 
 ## Recent Changes
 
+**December 4, 2025 - Issue-Based Notification System**
+- Created comprehensive notification system to identify and alert students about actionable issues
+- Database schema: notifications table with type, title, message, priority, action links, resolution status, expiration, and metadata
+- 9 notification types: missing_profile_fields, missing_documents, invalid_documents, deadline_approaching, application_approved, application_denied, document_rejected, technical_error, scholarship_updated
+- 4 priority levels: urgent (red), high (yellow), medium (blue), low (gray) with distinct UI styling
+- Auto-resolution logic: notifications automatically resolve when underlying issues are fixed (profile completed, documents uploaded, etc.)
+- Notification service (server/notificationService.ts): detects issues and creates appropriate notifications with email integration
+- API endpoints: GET /api/notifications, POST /api/notifications/check, PATCH /api/notifications/:id/read, PATCH /api/notifications/:id/resolve
+- NotificationCenter UI component with priority-based styling, action buttons linking to relevant pages, and dismissal functionality
+- Notification checks triggered on: dashboard load, profile updates, application status changes
+- Deadline notifications auto-expire based on expiresAt field
+- Email notifications respect user preferences before sending
+- Architect reviewed: auto-resolution and filtering logic verified
+
 **December 4, 2025 - Email Notification System**
 - Implemented automated email notifications using Resend integration
 - Email types: application confirmation, approval, rejection, document reminders, deadline alerts, weekly status digests
