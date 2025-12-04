@@ -6,6 +6,17 @@ ScholarHub is a web-based scholarship management platform designed to connect st
 
 ## Recent Changes
 
+**December 4, 2025 - Action Needed Banner**
+- Created ActionNeededBanner component that displays when student profile is incomplete
+- Uses same 15-field validation logic as ProfileCompletionIndicator for consistency
+- Tracks: personal info (3), academic details (4 incl. any test score), demographics (2), achievements (4), financial (2)
+- Groups missing fields by category with concise display (shows up to 3 items + overflow count)
+- Progress bar shows completion percentage matching the profile completion indicator
+- Dismiss button temporarily hides banner (resets on page reload)
+- Banner appears at top of all student routes when profile is incomplete
+- Automatically hides when all 15 required fields are complete
+- Architect reviewed: passed with correct field parity and React best practices
+
 **December 4, 2025 - International Student Resources Section**
 - Added "International Student Tuition & Scholarship Resources" section to student dashboard
 - Created JSON config file (client/src/config/internationalResources.json) for easy resource updates without code changes
