@@ -101,6 +101,55 @@ export const applicationDocuments = pgTable("application_documents", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Notification issue types
+export const notificationTypes = {
+  MISSING_PROFILE_FIELDS: 'missing_profile_fields',
+  MISSING_DOCUMENTS: 'missing_documents',
+  INVALID_DOCUMENTS: 'invalid_documents',
+  DEADLINE_APPROACHING: 'deadline_approaching',
+  APPLICATION_APPROVED: 'application_approved',
+  APPLICATION_DENIED: 'application_denied',
+  SCHOLARSHIP_UPDATED: 'scholarship_updated',
+  TECHNICAL_ERROR: 'technical_error',
+  DOCUMENT_REJECTED: 'document_rejected',
+  APPLICATION_INCOMPLETE: 'application_incomplete',
+} as const;
+
+export type NotificationType = typeof notificationTypes[keyof typeof notificationTypes];
+
+// Notification priority levels
+export const notificationPriorities = {
+  LOW: 'low',
+  MEDIUM: 'medium',
+  HIGH: 'high',
+  URGENT: 'urgent',
+} as const;
+
+export type NotificationPriority = typeof notificationPriorities[keyof typeof notificationPriorities];
+
+export const notifications = pgTable("notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  type: text("type").notNull(), // One of notificationTypes
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  actionText: text("action_text"), // e.g., "Complete Profile", "Upload Document"
+  actionUrl: text("action_url"), // e.g., "/student/profile", "/student/applications"
+  priority: text("priority").notNull().default("medium"), // low, medium, high, urgent
+  isRead: boolean("is_read").default(false),
+  isResolved: boolean("is_resolved").default(false),
+  resolvedAt: timestamp("resolved_at"),
+  sendEmail: boolean("send_email").default(false),
+  emailSent: boolean("email_sent").default(false),
+  emailSentAt: timestamp("email_sent_at"),
+  relatedEntityType: text("related_entity_type"), // 'scholarship', 'application', 'document', 'profile'
+  relatedEntityId: varchar("related_entity_id"),
+  metadata: text("metadata"), // JSON string for additional data
+  expiresAt: timestamp("expires_at"), // Optional expiration for time-sensitive notifications
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const supportMessages = pgTable("support_messages", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   studentId: varchar("student_id").notNull().references(() => users.id),
@@ -156,6 +205,12 @@ export const insertSupportMessageSchema = createInsertSchema(supportMessages).om
   updatedAt: true,
 });
 
+export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
@@ -173,3 +228,6 @@ export type ApplicationDocument = typeof applicationDocuments.$inferSelect;
 
 export type InsertSupportMessage = z.infer<typeof insertSupportMessageSchema>;
 export type SupportMessage = typeof supportMessages.$inferSelect;
+
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+export type Notification = typeof notifications.$inferSelect;

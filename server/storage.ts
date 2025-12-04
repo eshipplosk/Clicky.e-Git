@@ -1,6 +1,6 @@
 import { db } from "../db";
-import { users, studentProfiles, scholarships, scholarshipApplications, applicationDocuments, supportMessages, type User, type InsertUser, type Scholarship, type InsertScholarship, type StudentProfile, type InsertStudentProfile, type ScholarshipApplication, type InsertScholarshipApplication, type ApplicationDocument, type InsertApplicationDocument, type SupportMessage, type InsertSupportMessage } from "@shared/schema";
-import { eq, and, sql, desc } from "drizzle-orm";
+import { users, studentProfiles, scholarships, scholarshipApplications, applicationDocuments, supportMessages, notifications, type User, type InsertUser, type Scholarship, type InsertScholarship, type StudentProfile, type InsertStudentProfile, type ScholarshipApplication, type InsertScholarshipApplication, type ApplicationDocument, type InsertApplicationDocument, type SupportMessage, type InsertSupportMessage, type Notification, type InsertNotification } from "@shared/schema";
+import { eq, and, sql, desc, isNull } from "drizzle-orm";
 
 export interface IStorage {
   // User methods
@@ -50,6 +50,19 @@ export interface IStorage {
   createSupportMessage(message: InsertSupportMessage): Promise<SupportMessage>;
   replySupportMessage(id: string, adminId: string, adminReply: string): Promise<SupportMessage | undefined>;
   updateSupportMessageStatus(id: string, status: string): Promise<SupportMessage | undefined>;
+
+  // Notification methods
+  createNotification(notification: InsertNotification): Promise<Notification>;
+  getActiveNotifications(userId: string): Promise<Notification[]>;
+  getUnresolvedNotificationByType(userId: string, type: string): Promise<Notification | undefined>;
+  getUnresolvedNotificationByTypeAndEntity(userId: string, type: string, entityType: string, entityId: string): Promise<Notification | undefined>;
+  resolveNotification(notificationId: string): Promise<void>;
+  resolveNotificationsByType(userId: string, type: string): Promise<void>;
+  resolveNotificationsByTypeAndEntity(userId: string, type: string, entityType: string, entityId: string): Promise<void>;
+  markNotificationAsRead(notificationId: string): Promise<void>;
+  markNotificationEmailSent(notificationId: string): Promise<void>;
+  getScholarshipApplicationsByUserId(userId: string): Promise<ScholarshipApplication[]>;
+  getScholarshipApplicationById(applicationId: string): Promise<ScholarshipApplication | undefined>;
 }
 
 export class DbStorage implements IStorage {
@@ -324,6 +337,123 @@ export class DbStorage implements IStorage {
       .set({ status, updatedAt: new Date() })
       .where(eq(supportMessages.id, id))
       .returning();
+    return result[0];
+  }
+
+  // Notification methods
+  async createNotification(notification: InsertNotification): Promise<Notification> {
+    const result = await db.insert(notifications).values(notification).returning();
+    return result[0];
+  }
+
+  async getActiveNotifications(userId: string): Promise<Notification[]> {
+    const now = new Date();
+    const result = await db.select().from(notifications)
+      .where(and(
+        eq(notifications.userId, userId),
+        eq(notifications.isResolved, false)
+      ))
+      .orderBy(desc(notifications.createdAt));
+    
+    return result.filter(n => !n.expiresAt || new Date(n.expiresAt) > now);
+  }
+
+  async getUnresolvedNotificationByType(userId: string, type: string): Promise<Notification | undefined> {
+    const result = await db.select().from(notifications)
+      .where(and(
+        eq(notifications.userId, userId),
+        eq(notifications.type, type),
+        eq(notifications.isResolved, false)
+      ));
+    return result[0];
+  }
+
+  async getUnresolvedNotificationByTypeAndEntity(
+    userId: string, 
+    type: string, 
+    entityType: string, 
+    entityId: string
+  ): Promise<Notification | undefined> {
+    const result = await db.select().from(notifications)
+      .where(and(
+        eq(notifications.userId, userId),
+        eq(notifications.type, type),
+        eq(notifications.relatedEntityType, entityType),
+        eq(notifications.relatedEntityId, entityId),
+        eq(notifications.isResolved, false)
+      ));
+    return result[0];
+  }
+
+  async resolveNotification(notificationId: string): Promise<void> {
+    await db.update(notifications)
+      .set({ 
+        isResolved: true, 
+        resolvedAt: new Date(),
+        updatedAt: new Date() 
+      })
+      .where(eq(notifications.id, notificationId));
+  }
+
+  async resolveNotificationsByType(userId: string, type: string): Promise<void> {
+    await db.update(notifications)
+      .set({ 
+        isResolved: true, 
+        resolvedAt: new Date(),
+        updatedAt: new Date() 
+      })
+      .where(and(
+        eq(notifications.userId, userId),
+        eq(notifications.type, type),
+        eq(notifications.isResolved, false)
+      ));
+  }
+
+  async resolveNotificationsByTypeAndEntity(
+    userId: string, 
+    type: string, 
+    entityType: string, 
+    entityId: string
+  ): Promise<void> {
+    await db.update(notifications)
+      .set({ 
+        isResolved: true, 
+        resolvedAt: new Date(),
+        updatedAt: new Date() 
+      })
+      .where(and(
+        eq(notifications.userId, userId),
+        eq(notifications.type, type),
+        eq(notifications.relatedEntityType, entityType),
+        eq(notifications.relatedEntityId, entityId),
+        eq(notifications.isResolved, false)
+      ));
+  }
+
+  async markNotificationAsRead(notificationId: string): Promise<void> {
+    await db.update(notifications)
+      .set({ isRead: true, updatedAt: new Date() })
+      .where(eq(notifications.id, notificationId));
+  }
+
+  async markNotificationEmailSent(notificationId: string): Promise<void> {
+    await db.update(notifications)
+      .set({ 
+        emailSent: true, 
+        emailSentAt: new Date(),
+        updatedAt: new Date() 
+      })
+      .where(eq(notifications.id, notificationId));
+  }
+
+  async getScholarshipApplicationsByUserId(userId: string): Promise<ScholarshipApplication[]> {
+    return await db.select().from(scholarshipApplications)
+      .where(eq(scholarshipApplications.userId, userId));
+  }
+
+  async getScholarshipApplicationById(applicationId: string): Promise<ScholarshipApplication | undefined> {
+    const result = await db.select().from(scholarshipApplications)
+      .where(eq(scholarshipApplications.id, applicationId));
     return result[0];
   }
 }
