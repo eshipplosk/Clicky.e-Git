@@ -28,7 +28,7 @@ interface ProfileRequirement {
   category: 'personal' | 'academic' | 'achievements' | 'financial';
   checkFilled: (profile: StudentProfile) => boolean;
 }
-
+//test
 // Category labels and order for display
 const CATEGORY_CONFIG: Record<string, { label: string; order: number }> = {
   personal: { label: 'Personal Info', order: 1 },
