@@ -1,8 +1,6 @@
 name: "Security CI"
 
 on:
-  push:
-    branches: [ "main-new" ]
   pull_request:
     branches: [ "main-new" ]
   schedule:
