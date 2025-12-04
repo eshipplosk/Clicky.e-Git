@@ -20,7 +20,14 @@ export interface IStorage {
 
   // Student profile methods
   getStudentProfile(userId: string): Promise<StudentProfile | undefined>;
+  getStudentProfileByUserId(userId: string): Promise<StudentProfile | undefined>;
   createOrUpdateStudentProfile(profile: InsertStudentProfile): Promise<StudentProfile>;
+  updateStudentProfileEmailPreferences(userId: string, preferences: {
+    emailNotifications?: boolean;
+    emailApplicationUpdates?: boolean;
+    emailDeadlineReminders?: boolean;
+    emailWeeklyDigest?: boolean;
+  }): Promise<StudentProfile | undefined>;
 
   // Scholarship application methods
   getScholarshipApplications(userId: string): Promise<ScholarshipApplication[]>;
@@ -28,6 +35,8 @@ export interface IStorage {
   removeScholarshipApplication(userId: string, scholarshipId: string): Promise<boolean>;
   getAcceptedScholarshipsWithDetails(userId: string): Promise<Array<Scholarship & { applicationId: string }>>;
   getScholarshipApplication(userId: string, scholarshipId: string): Promise<ScholarshipApplication | undefined>;
+  updateScholarshipApplicationStatus(applicationId: string, status: string): Promise<ScholarshipApplication | undefined>;
+  getAllApplicationsWithDetails(): Promise<Array<ScholarshipApplication & { scholarship: Scholarship; profile: StudentProfile | null }>>;
 
   // Application document methods
   getApplicationDocuments(applicationId: string): Promise<ApplicationDocument[]>;
@@ -108,6 +117,26 @@ export class DbStorage implements IStorage {
   // Student profile methods
   async getStudentProfile(userId: string): Promise<StudentProfile | undefined> {
     const result = await db.select().from(studentProfiles).where(eq(studentProfiles.userId, userId));
+    return result[0];
+  }
+
+  async getStudentProfileByUserId(userId: string): Promise<StudentProfile | undefined> {
+    return this.getStudentProfile(userId);
+  }
+
+  async updateStudentProfileEmailPreferences(userId: string, preferences: {
+    emailNotifications?: boolean;
+    emailApplicationUpdates?: boolean;
+    emailDeadlineReminders?: boolean;
+    emailWeeklyDigest?: boolean;
+  }): Promise<StudentProfile | undefined> {
+    const result = await db.update(studentProfiles)
+      .set({
+        ...preferences,
+        updatedAt: new Date()
+      })
+      .where(eq(studentProfiles.userId, userId))
+      .returning();
     return result[0];
   }
 
@@ -210,6 +239,30 @@ export class DbStorage implements IStorage {
         eq(scholarshipApplications.scholarshipId, scholarshipId)
       ));
     return result[0];
+  }
+
+  async updateScholarshipApplicationStatus(applicationId: string, status: string): Promise<ScholarshipApplication | undefined> {
+    const result = await db.update(scholarshipApplications)
+      .set({ status })
+      .where(eq(scholarshipApplications.id, applicationId))
+      .returning();
+    return result[0];
+  }
+
+  async getAllApplicationsWithDetails(): Promise<Array<ScholarshipApplication & { scholarship: Scholarship; profile: StudentProfile | null }>> {
+    const apps = await db.select().from(scholarshipApplications).orderBy(desc(scholarshipApplications.appliedAt));
+    
+    const results = await Promise.all(apps.map(async (app) => {
+      const scholarship = await this.getScholarship(app.scholarshipId);
+      const profile = await this.getStudentProfile(app.userId);
+      return {
+        ...app,
+        scholarship: scholarship!,
+        profile: profile || null
+      };
+    }));
+    
+    return results.filter(r => r.scholarship);
   }
 
   // Application document methods

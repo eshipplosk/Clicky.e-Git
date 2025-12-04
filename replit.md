@@ -6,6 +6,18 @@ ScholarHub is a web-based scholarship management platform designed to connect st
 
 ## Recent Changes
 
+**December 4, 2025 - Email Notification System**
+- Implemented automated email notifications using Resend integration
+- Email types: application confirmation, approval, rejection, document reminders, deadline alerts, weekly status digests
+- HTML email templates with Clicky.e branding (yellow #ffb800) and direct links to dashboard
+- Added email preference fields to student profiles (master toggle + individual preferences)
+- Created EmailPreferences component with switches for granular control
+- Integrated preferences into profile page and student settings
+- Admin endpoints for sending reminders and updating application statuses
+- Email triggers respect user preferences before sending
+- Zod validation for email preference updates
+- Architect reviewed: fixed rejection email trigger and added validation
+
 **December 4, 2025 - Action Needed Banner**
 - Created ActionNeededBanner component that displays when student profile is incomplete
 - Uses same 15-field validation logic as ProfileCompletionIndicator for consistency

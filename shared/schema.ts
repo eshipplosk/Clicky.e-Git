@@ -45,6 +45,10 @@ export const studentProfiles = pgTable("student_profiles", {
   transportationCost: integer("transportation_cost"),
   grantsAmount: integer("grants_amount"),
   loansAmount: integer("loans_amount"),
+  emailNotifications: boolean("email_notifications").default(true),
+  emailApplicationUpdates: boolean("email_application_updates").default(true),
+  emailDeadlineReminders: boolean("email_deadline_reminders").default(true),
+  emailWeeklyDigest: boolean("email_weekly_digest").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

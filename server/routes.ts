@@ -6,6 +6,14 @@ import bcrypt from "bcrypt";
 import { getScholarshipAssistantResponse } from "./aiAssistant";
 import { z } from "zod";
 import { compareRequirements } from "./requirementChecker";
+import { 
+  sendApplicationSubmittedEmail,
+  sendApplicationApprovedEmail,
+  sendApplicationRejectedEmail,
+  sendDocumentReminderEmail,
+  sendDeadlineReminderEmail,
+  sendStatusUpdateEmail
+} from "./emailService";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware to check if user is logged in
@@ -331,6 +339,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Scholarship ID is required" });
       }
       const application = await storage.acceptScholarship(req.session.userId!, scholarshipId);
+      
+      // Send confirmation email if profile exists and has email notifications enabled
+      const profile = await storage.getStudentProfile(req.session.userId!);
+      const scholarship = await storage.getScholarship(scholarshipId);
+      
+      if (profile && scholarship && profile.emailNotifications !== false && profile.emailApplicationUpdates !== false) {
+        // Send email asynchronously (don't block the response)
+        sendApplicationSubmittedEmail(
+          `${profile.firstName} ${profile.lastName}`,
+          profile.email,
+          scholarship.title,
+          scholarship.amount,
+          application.id
+        ).catch(err => console.error('Failed to send application confirmation email:', err));
+      }
+      
       res.json(application);
     } catch (error) {
       console.error("Error accepting scholarship:", error);
@@ -496,6 +520,125 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         error: error.message || "Failed to get AI response" 
       });
+    }
+  });
+
+  // Admin endpoint to update application status (approve/reject)
+  app.patch("/api/admin/applications/:applicationId/status", requireAdmin, async (req, res) => {
+    try {
+      const { applicationId } = req.params;
+      const { status } = req.body;
+      
+      if (!['accepted', 'pending', 'declined', 'approved'].includes(status)) {
+        return res.status(400).json({ error: "Invalid status" });
+      }
+
+      const application = await storage.updateScholarshipApplicationStatus(applicationId, status);
+      if (!application) {
+        return res.status(404).json({ error: "Application not found" });
+      }
+
+      // Get student profile and scholarship for email notification
+      const profile = await storage.getStudentProfileByUserId(application.userId);
+      const scholarship = await storage.getScholarship(application.scholarshipId);
+
+      if (profile && scholarship && profile.emailNotifications !== false && profile.emailApplicationUpdates !== false) {
+        if (status === 'approved' || status === 'accepted') {
+          sendApplicationApprovedEmail(
+            `${profile.firstName} ${profile.lastName}`,
+            profile.email,
+            scholarship.title,
+            scholarship.amount,
+            application.id
+          ).catch(err => console.error('Failed to send approval email:', err));
+        } else if (status === 'declined') {
+          sendApplicationRejectedEmail(
+            `${profile.firstName} ${profile.lastName}`,
+            profile.email,
+            scholarship.title,
+            scholarship.amount,
+            application.id
+          ).catch(err => console.error('Failed to send rejection email:', err));
+        }
+      }
+
+      res.json(application);
+    } catch (error) {
+      console.error("Error updating application status:", error);
+      res.status(500).json({ error: "Failed to update application status" });
+    }
+  });
+
+  // Email preferences validation schema
+  const emailPreferencesSchema = z.object({
+    emailNotifications: z.boolean().optional(),
+    emailApplicationUpdates: z.boolean().optional(),
+    emailDeadlineReminders: z.boolean().optional(),
+    emailWeeklyDigest: z.boolean().optional(),
+  });
+
+  // Update email notification preferences
+  app.patch("/api/profile/email-preferences", requireAuth, async (req, res) => {
+    try {
+      const validated = emailPreferencesSchema.parse(req.body);
+      
+      const profile = await storage.updateStudentProfileEmailPreferences(req.session.userId!, validated);
+      
+      if (!profile) {
+        return res.status(404).json({ error: "Profile not found" });
+      }
+      
+      res.json(profile);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid email preferences data", details: error.errors });
+      }
+      console.error("Error updating email preferences:", error);
+      res.status(500).json({ error: "Failed to update email preferences" });
+    }
+  });
+
+  // Send document reminder email (admin or automated trigger)
+  app.post("/api/admin/send-reminder", requireAdmin, async (req, res) => {
+    try {
+      const { userId, scholarshipId, pendingItems } = req.body;
+      
+      const profile = await storage.getStudentProfileByUserId(userId);
+      const scholarship = await storage.getScholarship(scholarshipId);
+      const application = await storage.getScholarshipApplication(userId, scholarshipId);
+      
+      if (!profile || !scholarship || !application) {
+        return res.status(404).json({ error: "Profile, scholarship, or application not found" });
+      }
+      
+      if (profile.emailNotifications === false || profile.emailDeadlineReminders === false) {
+        return res.json({ success: false, message: "User has disabled reminder emails" });
+      }
+      
+      const result = await sendDocumentReminderEmail(
+        `${profile.firstName} ${profile.lastName}`,
+        profile.email,
+        scholarship.title,
+        pendingItems || [],
+        scholarship.deadline,
+        application.id
+      );
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error sending reminder:", error);
+      res.status(500).json({ error: "Failed to send reminder" });
+    }
+  });
+
+  // Get all applications for admin
+  app.get("/api/admin/applications", requireAdmin, async (req, res) => {
+    try {
+      const applications = await storage.getAllApplicationsWithDetails();
+      res.json(applications);
+    } catch (error) {
+      console.error("Error fetching all applications:", error);
+      res.status(500).json({ error: "Failed to fetch applications" });
     }
   });
 
