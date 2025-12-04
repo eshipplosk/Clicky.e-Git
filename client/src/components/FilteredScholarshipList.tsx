@@ -259,8 +259,34 @@ export function FilteredScholarshipList() {
     return criteria > 0 ? Math.round((score / criteria) * 100) : 50;
   };
 
+  // Normalize API scholarships to have a requirements object like mock data
+  const normalizedScholarships = useMemo(() => {
+    return scholarships.map((s: any) => ({
+      id: s.id,
+      title: s.title,
+      amount: s.amount,
+      deadline: s.deadline,
+      category: s.category,
+      eligibility: s.eligibility,
+      description: s.description,
+      requirements: s.requirements || {
+        minGPA: s.minGPA,
+        minACT: s.minACT,
+        minSAT: s.minSAT,
+        minLSAT: s.minLSAT,
+        minGRE: s.minGRE,
+        ethnicity: s.ethnicityRequirements,
+        firstGen: s.requiresFirstGen,
+        veteran: s.requiresVeteran,
+        disability: s.requiresDisability,
+        major: s.majorRequirements,
+        skills: s.skillRequirements,
+      }
+    }));
+  }, [scholarships]);
+
   // Use real scholarships if available, otherwise fallback to mock
-  const displayScholarships = scholarships.length > 0 ? scholarships : mockScholarships;
+  const displayScholarships = normalizedScholarships.length > 0 ? normalizedScholarships : mockScholarships;
 
   const filteredScholarships = useMemo(() => {
     console.log('FilteredScholarshipList - userProfile:', userProfile);
@@ -299,7 +325,7 @@ export function FilteredScholarshipList() {
       // Demographics filters
       if (filters.ethnicity && filters.ethnicity.length > 0) {
         if (!scholarship.requirements.ethnicity || 
-            !scholarship.requirements.ethnicity.some(e => filters.ethnicity!.includes(e))) {
+            !scholarship.requirements.ethnicity.some((e: string) => filters.ethnicity!.includes(e))) {
           return false;
         }
       }
