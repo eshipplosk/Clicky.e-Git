@@ -14,6 +14,16 @@ import {
   sendDeadlineReminderEmail,
   sendStatusUpdateEmail
 } from "./emailService";
+import {
+  getActiveNotifications,
+  markNotificationAsRead,
+  resolveNotification,
+  runNotificationChecks,
+  createApplicationStatusNotification,
+  createRejectedDocumentNotification,
+  createTechnicalErrorNotification,
+  checkAndCreateProfileNotification
+} from "./notificationService";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware to check if user is logged in
@@ -639,6 +649,122 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching all applications:", error);
       res.status(500).json({ error: "Failed to fetch applications" });
+    }
+  });
+
+  // ==================== NOTIFICATION ENDPOINTS ====================
+
+  // Get all active (unresolved) notifications for the current user
+  app.get("/api/notifications", requireAuth, async (req, res) => {
+    try {
+      const notifications = await getActiveNotifications(req.session.userId!);
+      res.json(notifications);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      res.status(500).json({ error: "Failed to fetch notifications" });
+    }
+  });
+
+  // Check for new notifications (runs all notification checks)
+  app.post("/api/notifications/check", requireAuth, async (req, res) => {
+    try {
+      const result = await runNotificationChecks(req.session.userId!);
+      res.json(result);
+    } catch (error) {
+      console.error("Error checking notifications:", error);
+      res.status(500).json({ error: "Failed to check notifications" });
+    }
+  });
+
+  // Mark a notification as read
+  app.patch("/api/notifications/:notificationId/read", requireAuth, async (req, res) => {
+    try {
+      const { notificationId } = req.params;
+      await markNotificationAsRead(notificationId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+      res.status(500).json({ error: "Failed to mark notification as read" });
+    }
+  });
+
+  // Resolve (dismiss) a notification
+  app.patch("/api/notifications/:notificationId/resolve", requireAuth, async (req, res) => {
+    try {
+      const { notificationId } = req.params;
+      await resolveNotification(notificationId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error resolving notification:", error);
+      res.status(500).json({ error: "Failed to resolve notification" });
+    }
+  });
+
+  // Get notification count (unread)
+  app.get("/api/notifications/count", requireAuth, async (req, res) => {
+    try {
+      const notifications = await getActiveNotifications(req.session.userId!);
+      const unreadCount = notifications.filter(n => !n.isRead).length;
+      res.json({ total: notifications.length, unread: unreadCount });
+    } catch (error) {
+      console.error("Error fetching notification count:", error);
+      res.status(500).json({ error: "Failed to fetch notification count" });
+    }
+  });
+
+  // Check profile completion and create/resolve notification as needed
+  app.post("/api/notifications/check-profile", requireAuth, async (req, res) => {
+    try {
+      const notification = await checkAndCreateProfileNotification(req.session.userId!);
+      res.json({ notification });
+    } catch (error) {
+      console.error("Error checking profile notification:", error);
+      res.status(500).json({ error: "Failed to check profile notification" });
+    }
+  });
+
+  // Admin: Create a document rejection notification for a student
+  app.post("/api/admin/notifications/document-rejected", requireAdmin, async (req, res) => {
+    try {
+      const { userId, applicationId, documentType, rejectionReason } = req.body;
+      
+      if (!userId || !applicationId || !documentType || !rejectionReason) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+      
+      const notification = await createRejectedDocumentNotification(
+        userId,
+        applicationId,
+        documentType,
+        rejectionReason
+      );
+      
+      res.json(notification);
+    } catch (error) {
+      console.error("Error creating document rejection notification:", error);
+      res.status(500).json({ error: "Failed to create notification" });
+    }
+  });
+
+  // Admin: Create a technical error notification for a student
+  app.post("/api/admin/notifications/technical-error", requireAdmin, async (req, res) => {
+    try {
+      const { userId, errorDescription, applicationId } = req.body;
+      
+      if (!userId || !errorDescription) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+      
+      const notification = await createTechnicalErrorNotification(
+        userId,
+        errorDescription,
+        applicationId
+      );
+      
+      res.json(notification);
+    } catch (error) {
+      console.error("Error creating technical error notification:", error);
+      res.status(500).json({ error: "Failed to create notification" });
     }
   });
 
