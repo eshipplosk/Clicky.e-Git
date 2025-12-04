@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import { format, differenceInDays } from "date-fns";
+import { ApplicationProgressBar } from "@/components/ApplicationProgressBar";
 
 interface RequirementCheck {
   requirement: string;
@@ -161,6 +162,19 @@ export default function ScholarshipApplicationDetails() {
           Back to Dashboard
         </Button>
       </Link>
+
+      {/* Application Progress Bar */}
+      <Card data-testid="card-progress-bar">
+        <CardHeader>
+          <CardTitle>Application Progress</CardTitle>
+          <CardDescription>
+            Track your progress through the scholarship application process
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ApplicationProgressBar scholarshipId={scholarshipId} />
+        </CardContent>
+      </Card>
 
       {/* Summary Card */}
       <Card data-testid="card-application-summary">

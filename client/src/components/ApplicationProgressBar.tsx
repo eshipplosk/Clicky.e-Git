@@ -54,14 +54,14 @@ const STAGES: StageConfig[] = [
     label: 'Application Submitted',
     shortLabel: 'Submitted',
     icon: Send,
-    description: 'Your application has been submitted'
+    description: 'Your application has been submitted for review'
   },
   {
     id: 'under_review',
     label: 'Under Review',
     shortLabel: 'Review',
     icon: Clock,
-    description: 'Your application is being reviewed'
+    description: 'Your application is being reviewed by the committee'
   },
   {
     id: 'decision_made',
@@ -97,6 +97,11 @@ function isProfileComplete(profile: StudentProfile | null | undefined): boolean 
   return hasExtracurriculars && hasSkills && hasLeadership;
 }
 
+interface DocumentInfo {
+  applicationId: string;
+  status: string;
+}
+
 interface ApplicationProgressBarProps {
   applicationId?: string;
   scholarshipId?: string;
@@ -120,16 +125,18 @@ export function ApplicationProgressBar({
     queryKey: ['/api/scholarship-applications'],
   });
 
-  const { data: documents = [] } = useQuery<Array<{ applicationId: string; status: string }>>({
-    queryKey: ['/api/application-documents', applicationId],
-    enabled: !!applicationId,
-  });
-
   const application = applicationId 
     ? applications.find(a => a.id === applicationId)
     : scholarshipId
       ? applications.find(a => a.scholarshipId === scholarshipId)
       : applications[0];
+
+  const resolvedApplicationId = application?.id || applicationId;
+
+  const { data: documents = [] } = useQuery<DocumentInfo[]>({
+    queryKey: ['/api/application-documents', resolvedApplicationId],
+    enabled: !!resolvedApplicationId,
+  });
 
   const currentStage = determineCurrentStage(profile, application, documents);
   const currentStageIndex = STAGES.findIndex(s => s.id === currentStage);
@@ -155,7 +162,6 @@ export function ApplicationProgressBar({
           {STAGES.map((stage, index) => {
             const isCompleted = index < currentStageIndex;
             const isCurrent = index === currentStageIndex;
-            const isPending = index > currentStageIndex;
             const StageIcon = stage.icon;
             
             let statusColor = "bg-muted text-muted-foreground";
@@ -245,7 +251,7 @@ export function ApplicationProgressBar({
 function determineCurrentStage(
   profile: StudentProfile | null | undefined,
   application: ScholarshipApplication | null | undefined,
-  documents: Array<{ applicationId: string; status: string }> | undefined
+  documents: DocumentInfo[] | undefined
 ): ApplicationStage {
   if (!profile) {
     return 'account_created';
@@ -259,26 +265,31 @@ function determineCurrentStage(
     return 'profile_completed';
   }
   
-  if (application.status === 'accepted') {
-    return 'decision_made';
-  }
-  
-  if (application.status === 'declined') {
+  if (application.status === 'accepted' || application.status === 'declined') {
     return 'decision_made';
   }
   
   const uploadedDocs = documents?.filter(d => d.status === 'uploaded') || [];
+  const pendingDocs = documents?.filter(d => d.status === 'pending') || [];
   const hasUploadedDocs = uploadedDocs.length > 0;
+  const allDocsUploaded = pendingDocs.length === 0 && uploadedDocs.length > 0;
   
-  if (!hasUploadedDocs) {
+  if (!hasUploadedDocs && pendingDocs.length > 0) {
     return 'application_started';
   }
   
-  if (application.status === 'pending') {
-    return 'under_review';
+  if (hasUploadedDocs && !allDocsUploaded) {
+    return 'documents_uploaded';
   }
   
-  return 'application_submitted';
+  if (allDocsUploaded || (documents && documents.length === 0)) {
+    if (application.status === 'pending') {
+      return 'under_review';
+    }
+    return 'application_submitted';
+  }
+  
+  return 'application_started';
 }
 
 interface OverallProgressBarProps {
@@ -297,6 +308,7 @@ export function OverallProgressBar({ className }: OverallProgressBarProps) {
   const profileComplete = isProfileComplete(profile);
   const hasApplications = applications.length > 0;
   const hasApproved = applications.some(a => a.status === 'accepted');
+  const hasDeclined = applications.some(a => a.status === 'declined');
   const hasPending = applications.some(a => a.status === 'pending');
   
   let overallStage: ApplicationStage = 'account_created';
@@ -305,15 +317,13 @@ export function OverallProgressBar({ className }: OverallProgressBarProps) {
     overallStage = 'profile_completed';
   }
   
-  if (hasApplications) {
-    overallStage = 'application_started';
-    
-    if (hasPending) {
-      overallStage = 'under_review';
-    }
-    
-    if (hasApproved) {
+  if (hasApplications && profileComplete) {
+    if (hasApproved || hasDeclined) {
       overallStage = 'decision_made';
+    } else if (hasPending) {
+      overallStage = 'under_review';
+    } else {
+      overallStage = 'application_submitted';
     }
   }
 
@@ -362,7 +372,14 @@ export function MiniProgressIndicator({
       ? applications.find(a => a.scholarshipId === scholarshipId)
       : null;
 
-  const currentStage = determineCurrentStage(profile, application, []);
+  const resolvedApplicationId = application?.id || applicationId;
+
+  const { data: documents = [] } = useQuery<DocumentInfo[]>({
+    queryKey: ['/api/application-documents', resolvedApplicationId],
+    enabled: !!resolvedApplicationId,
+  });
+
+  const currentStage = determineCurrentStage(profile, application, documents);
   const currentStageIndex = STAGES.findIndex(s => s.id === currentStage);
   const totalStages = STAGES.length;
 
