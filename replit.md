@@ -6,6 +6,20 @@ ScholarHub is a web-based scholarship management platform designed to connect st
 
 ## Recent Changes
 
+**December 4, 2025 - International Student Resources Section**
+- Added "International Student Tuition & Scholarship Resources" section to student dashboard
+- Created JSON config file (client/src/config/internationalResources.json) for easy resource updates without code changes
+- Curated list includes: cost estimators, currency converters, scholarship databases (Fulbright, IIE, InternationalScholarships.com), and official resources (EducationUSA)
+- All links open in new tabs with proper security attributes (rel="noopener noreferrer")
+- Responsive grid layout: 1 column (mobile), 2 columns (tablet), 4 columns (desktop)
+- Category badges with color-coded styling for visual organization
+- Section placed below "Top Matches for You" on the dashboard
+- Architect reviewed: passed with no blocking issues
+
+**December 4, 2025 - FilteredScholarshipList Data Normalization Fix**
+- Fixed crash in scholarship filtering when API returns flat properties vs. nested requirements object
+- Added data normalization layer to handle both API format (minGPA, minACT, etc.) and mock format (requirements.minGPA)
+
 **November 8, 2025 - AI Scholarship Assistant**
 - Implemented intelligent scholarship matching algorithm with 100-point scoring system
 - Matching criteria: GPA (20pts), test scores (15pts), major (15pts), demographics (20pts), skills (10pts), volunteer hours (10pts), financial need bonus (10pts)

@@ -1,0 +1,88 @@
+{
+  "sectionTitle": "International Student Tuition & Scholarship Resources",
+  "sectionDescription": "Helpful tools and resources for international students to plan their education financing.",
+  "resources": [
+    {
+      "id": "edupass",
+      "title": "EduPASS Cost Calculator",
+      "description": "Estimate your total cost of education at U.S. universities including tuition, living expenses, and more.",
+      "url": "https://www.edupass.org/finaid/costcalc.phtml",
+      "category": "cost-estimator",
+      "icon": "calculator"
+    },
+    {
+      "id": "iie-funding",
+      "title": "IIE Funding for U.S. Study",
+      "description": "Institute of International Education's comprehensive database of scholarships for international students.",
+      "url": "https://www.iie.org/programs/generation-study-abroad/",
+      "category": "scholarships",
+      "icon": "graduation-cap"
+    },
+    {
+      "id": "international-scholarships",
+      "title": "InternationalScholarships.com",
+      "description": "Searchable database of scholarships, grants, and financial aid for international students worldwide.",
+      "url": "https://www.internationalscholarships.com/",
+      "category": "scholarships",
+      "icon": "award"
+    },
+    {
+      "id": "xe-currency",
+      "title": "XE Currency Converter",
+      "description": "Convert between currencies to understand costs in your home currency. Live exchange rates updated constantly.",
+      "url": "https://www.xe.com/currencyconverter/",
+      "category": "currency",
+      "icon": "dollar-sign"
+    },
+    {
+      "id": "fulbright",
+      "title": "Fulbright Program",
+      "description": "Prestigious U.S. government-sponsored scholarships for international students and scholars.",
+      "url": "https://foreign.fulbrightonline.org/",
+      "category": "scholarships",
+      "icon": "globe"
+    },
+    {
+      "id": "educationusa",
+      "title": "EducationUSA",
+      "description": "U.S. Department of State's official resource for international students planning to study in the United States.",
+      "url": "https://educationusa.state.gov/",
+      "category": "official",
+      "icon": "landmark"
+    },
+    {
+      "id": "numbeo-cost",
+      "title": "Numbeo Cost of Living",
+      "description": "Compare cost of living between cities worldwide to plan your budget for studying abroad.",
+      "url": "https://www.numbeo.com/cost-of-living/",
+      "category": "cost-estimator",
+      "icon": "map-pin"
+    },
+    {
+      "id": "rotary-scholarships",
+      "title": "Rotary Peace Fellowships",
+      "description": "Fully funded scholarships for peace and development studies at partner universities worldwide.",
+      "url": "https://www.rotary.org/en/our-programs/peace-fellowships",
+      "category": "scholarships",
+      "icon": "heart"
+    }
+  ],
+  "categories": {
+    "scholarships": {
+      "label": "Scholarships",
+      "color": "primary"
+    },
+    "cost-estimator": {
+      "label": "Cost Estimators",
+      "color": "blue"
+    },
+    "currency": {
+      "label": "Currency Tools",
+      "color": "green"
+    },
+    "official": {
+      "label": "Official Resources",
+      "color": "purple"
+    }
+  }
+}

@@ -5,6 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { Award, BookOpen, Clock, TrendingUp, Sparkles, ArrowRight, TrendingDown, BadgeDollarSign, Landmark } from 'lucide-react';
 import { ScholarshipCard } from './ScholarshipCard';
 import { ProfileCompletionIndicator } from './ProfileCompletionIndicator';
+import { InternationalStudentResources } from './InternationalStudentResources';
 import { Link } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
@@ -343,6 +344,9 @@ export function StudentDashboard({
           </div>
         )}
       </div>
+
+      {/* International Student Resources Section */}
+      <InternationalStudentResources />
     </div>
   );
 }
