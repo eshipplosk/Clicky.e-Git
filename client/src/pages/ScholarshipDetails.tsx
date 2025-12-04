@@ -89,7 +89,7 @@ export default function ScholarshipDetails() {
   const { toast } = useToast();
 
   const { data: scholarship, isLoading } = useQuery<Scholarship>({
-    queryKey: ['/api/scholarships', scholarshipId],
+    queryKey: [`/api/scholarships/${scholarshipId}`],
     enabled: !!scholarshipId
   });
 
