@@ -297,7 +297,13 @@ export function StudentDashboard({
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Top Matches for You</h2>
-          <Button variant="outline" data-testid="button-view-all">View All</Button>
+          <Button 
+            variant="outline" 
+            onClick={() => setLocation('/student/scholarships')}
+            data-testid="button-view-all"
+          >
+            View All
+          </Button>
         </div>
         
         {isLoadingScholarships ? (
