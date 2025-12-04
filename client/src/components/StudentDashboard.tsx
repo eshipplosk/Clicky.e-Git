@@ -245,26 +245,54 @@ export function StudentDashboard({
         </Card>
       )}
 
-      {/* AI Assistant CTA */}
-      <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10">
-        <CardContent className="flex items-center justify-between gap-4 p-6">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-primary/10 rounded-md">
-              <Sparkles className="h-6 w-6 text-primary" />
+      {/* Quick Actions Row */}
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* My Scholarships CTA */}
+        <Card className="hover-elevate" style={{ borderColor: 'hsl(var(--brand-yellow) / 0.3)', background: 'linear-gradient(to right, hsl(var(--brand-yellow) / 0.05), hsl(var(--brand-yellow) / 0.1))' }}>
+          <CardContent className="flex items-center justify-between gap-4 p-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-md" style={{ backgroundColor: 'hsl(var(--brand-yellow) / 0.15)' }}>
+                <Award className="h-6 w-6" style={{ color: 'hsl(var(--brand-yellow))' }} />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg">My Scholarships</h3>
+                <p className="text-sm text-muted-foreground">
+                  {acceptedScholarships.length > 0 
+                    ? `You have ${acceptedScholarships.length} scholarship${acceptedScholarships.length !== 1 ? 's' : ''} applied`
+                    : 'View and manage your scholarship applications'}
+                </p>
+              </div>
             </div>
-            <div>
-              <h3 className="font-semibold text-lg">AI Scholarship Assistant</h3>
-              <p className="text-sm text-muted-foreground">Get personalized scholarship recommendations and expert guidance</p>
+            <Button 
+              onClick={() => setLocation('/student/my-scholarships')}
+              data-testid="button-my-scholarships"
+            >
+              View All
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* AI Assistant CTA */}
+        <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10 hover-elevate">
+          <CardContent className="flex items-center justify-between gap-4 p-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-primary/10 rounded-md">
+                <Sparkles className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg">AI Scholarship Assistant</h3>
+                <p className="text-sm text-muted-foreground">Get personalized recommendations and expert guidance</p>
+              </div>
             </div>
-          </div>
-          <Button 
-            onClick={() => setLocation('/student/ai-assistant')}
-            data-testid="button-ai-assistant"
-          >
-            Try Now
-          </Button>
-        </CardContent>
-      </Card>
+            <Button 
+              onClick={() => setLocation('/student/ai-assistant')}
+              data-testid="button-ai-assistant"
+            >
+              Try Now
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
 
       <div>
         <div className="flex items-center justify-between mb-4">
