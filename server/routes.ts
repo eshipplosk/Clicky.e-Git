@@ -324,6 +324,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       
       const profile = await storage.createOrUpdateStudentProfile(cleanedData);
+      
+      // Check and update profile completion notification
+      checkAndCreateProfileNotification(req.session.userId!)
+        .catch(err => console.error('Failed to check profile notification:', err));
+      
       res.json(profile);
     } catch (error) {
       console.error("Error saving profile:", error);
@@ -570,6 +575,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
             application.id
           ).catch(err => console.error('Failed to send rejection email:', err));
         }
+      }
+
+      // Create in-app notification for status change
+      if (status === 'approved' || status === 'accepted' || status === 'declined') {
+        createApplicationStatusNotification(
+          application.userId,
+          applicationId,
+          status === 'declined' ? 'declined' : 'approved'
+        ).catch(err => console.error('Failed to create status notification:', err));
       }
 
       res.json(application);
