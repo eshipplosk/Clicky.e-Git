@@ -1,0 +1,95 @@
+name: "Security CI"
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    - cron: "0 3 * * 1"  # optional: weekly scan (Mondays 03:00 UTC)
+
+jobs:
+  # ---------------------------
+  # 1) CodeQL static analysis
+  # ---------------------------
+  codeql:
+    name: CodeQL Analysis (JS/TS)
+    runs-on: ubuntu-latest
+
+    permissions:
+      actions: read
+      contents: read
+      security-events: write  # needed to upload results to Security tab
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          # "javascript" covers both JavaScript and TypeScript
+          languages: javascript
+          # optional: uncomment for extra rules
+          # queries: security-and-quality
+
+      # For JS/TS apps, autobuild is usually enough.
+      # If it fails, you can replace it with manual npm install/build.
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:javascript"
+
+  # ---------------------------
+  # 2) NPM dependency audit
+  # ---------------------------
+  npm-audit:
+    name: NPM Audit (dependencies)
+    runs-on: ubuntu-latest
+
+    # This can run in parallel with CodeQL
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"         # <-- change to your Node version if needed
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      # --audit-level=moderate will fail on moderate+ vulns.
+      # Options: low | moderate | high | critical
+      - name: Run npm audit
+        run: npm audit --audit-level=moderate
+
+  # ---------------------------
+  # 3) Dependency Review (PR only)
+  # ---------------------------
+  dependency-review:
+    name: Dependency Review (PRs)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: write  # lets the action comment / annotate the PR if needed
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Dependency review
+        uses: actions/dependency-review-action@v4
+        with:
+          # Fail PR if it introduces vulnerable deps of this severity or higher
+          fail-on-severity: moderate
+          # You can also configure license rules, allowlists, etc.
+          # allow-licenses: MIT,Apache-2.0
+
