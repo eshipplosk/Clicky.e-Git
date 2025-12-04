@@ -6,12 +6,13 @@ import { Award, BookOpen, Clock, TrendingUp, Sparkles, ArrowRight, TrendingDown,
 import { ScholarshipCard } from './ScholarshipCard';
 import { ProfileCompletionIndicator } from './ProfileCompletionIndicator';
 import { InternationalStudentResources } from './InternationalStudentResources';
+import { NotificationCenter } from './NotificationCenter';
 import { Link } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import type { Scholarship, StudentProfile } from '@shared/schema';
 
 const MOTIVATIONAL_QUOTES = [
@@ -65,6 +66,21 @@ export function StudentDashboard({
   const { data: financialData } = useQuery<any>({
     queryKey: ['/api/financial-aid-summary'],
   });
+
+  // Trigger notification check on dashboard load
+  const checkNotificationsMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("POST", "/api/notifications/check", {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+    },
+  });
+
+  useEffect(() => {
+    checkNotificationsMutation.mutate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const acceptScholarshipMutation = useMutation({
     mutationFn: async (scholarshipId: string) => {
@@ -121,6 +137,9 @@ export function StudentDashboard({
           </p>
         </CardContent>
       </Card>
+
+      {/* Action Required Notifications */}
+      <NotificationCenter maxNotifications={3} />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>

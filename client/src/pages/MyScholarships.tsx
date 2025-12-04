@@ -7,6 +7,7 @@ import { ChevronLeft, Award, Calendar, DollarSign, Trash2, FileText } from 'luci
 import { Link, useLocation } from 'wouter';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { OverallProgressBar, MiniProgressIndicator } from '@/components/ApplicationProgressBar';
 import type { Scholarship } from '@shared/schema';
 
 interface ScholarshipWithApplication extends Scholarship {
@@ -72,6 +73,13 @@ export default function MyScholarships() {
           Track and manage your scholarship applications
         </p>
       </div>
+
+      {/* Overall Progress Bar */}
+      <Card className="mb-6" data-testid="card-overall-progress">
+        <CardContent className="p-6">
+          <OverallProgressBar />
+        </CardContent>
+      </Card>
 
       {/* Summary Card */}
       <Card className="mb-6">
@@ -149,6 +157,9 @@ export default function MyScholarships() {
                           })}
                         </span>
                       </div>
+                    </div>
+                    <div className="mt-3">
+                      <MiniProgressIndicator scholarshipId={scholarship.id} />
                     </div>
                   </div>
                   <div className="flex flex-row md:flex-col gap-2">

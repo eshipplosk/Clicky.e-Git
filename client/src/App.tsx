@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Header } from "@/components/Header";
+import { ActionNeededBanner } from "@/components/ActionNeededBanner";
 import { LandingPage } from "@/components/LandingPage";
 import { LoginPage } from "@/components/LoginPage";
 import { StudentDashboard } from "@/components/StudentDashboard";
@@ -46,9 +47,12 @@ interface User {
 }
 
 function Router() {
-  const [, setLocation] = useLocation();
+  const [currentPath, setLocation] = useLocation();
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Check if current path is a student route (for showing the action banner)
+  const isStudentRoute = currentPath.startsWith('/student/');
 
   // Check for existing session on mount
   useEffect(() => {
@@ -117,6 +121,9 @@ function Router() {
   return (
     <div className="min-h-screen flex flex-col">
       {user && <Header userRole={user.role} userName={user.firstName || user.username} onLogout={handleLogout} />}
+      
+      {/* Show Action Needed Banner for students on student routes */}
+      {user?.role === 'student' && isStudentRoute && <ActionNeededBanner />}
       
       <main className="flex-1">
         <Switch>

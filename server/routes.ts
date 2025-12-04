@@ -6,6 +6,24 @@ import bcrypt from "bcrypt";
 import { getScholarshipAssistantResponse } from "./aiAssistant";
 import { z } from "zod";
 import { compareRequirements } from "./requirementChecker";
+import { 
+  sendApplicationSubmittedEmail,
+  sendApplicationApprovedEmail,
+  sendApplicationRejectedEmail,
+  sendDocumentReminderEmail,
+  sendDeadlineReminderEmail,
+  sendStatusUpdateEmail
+} from "./emailService";
+import {
+  getActiveNotifications,
+  markNotificationAsRead,
+  resolveNotification,
+  runNotificationChecks,
+  createApplicationStatusNotification,
+  createRejectedDocumentNotification,
+  createTechnicalErrorNotification,
+  checkAndCreateProfileNotification
+} from "./notificationService";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware to check if user is logged in
@@ -306,6 +324,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       
       const profile = await storage.createOrUpdateStudentProfile(cleanedData);
+      
+      // Check and update profile completion notification
+      checkAndCreateProfileNotification(req.session.userId!)
+        .catch(err => console.error('Failed to check profile notification:', err));
+      
       res.json(profile);
     } catch (error) {
       console.error("Error saving profile:", error);
@@ -331,6 +354,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Scholarship ID is required" });
       }
       const application = await storage.acceptScholarship(req.session.userId!, scholarshipId);
+      
+      // Send confirmation email if profile exists and has email notifications enabled
+      const profile = await storage.getStudentProfile(req.session.userId!);
+      const scholarship = await storage.getScholarship(scholarshipId);
+      
+      if (profile && scholarship && profile.emailNotifications !== false && profile.emailApplicationUpdates !== false) {
+        // Send email asynchronously (don't block the response)
+        sendApplicationSubmittedEmail(
+          `${profile.firstName} ${profile.lastName}`,
+          profile.email,
+          scholarship.title,
+          scholarship.amount,
+          application.id
+        ).catch(err => console.error('Failed to send application confirmation email:', err));
+      }
+      
       res.json(application);
     } catch (error) {
       console.error("Error accepting scholarship:", error);
@@ -496,6 +535,250 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         error: error.message || "Failed to get AI response" 
       });
+    }
+  });
+
+  // Admin endpoint to update application status (approve/reject)
+  app.patch("/api/admin/applications/:applicationId/status", requireAdmin, async (req, res) => {
+    try {
+      const { applicationId } = req.params;
+      const { status } = req.body;
+      
+      if (!['accepted', 'pending', 'declined', 'approved'].includes(status)) {
+        return res.status(400).json({ error: "Invalid status" });
+      }
+
+      const application = await storage.updateScholarshipApplicationStatus(applicationId, status);
+      if (!application) {
+        return res.status(404).json({ error: "Application not found" });
+      }
+
+      // Get student profile and scholarship for email notification
+      const profile = await storage.getStudentProfileByUserId(application.userId);
+      const scholarship = await storage.getScholarship(application.scholarshipId);
+
+      if (profile && scholarship && profile.emailNotifications !== false && profile.emailApplicationUpdates !== false) {
+        if (status === 'approved' || status === 'accepted') {
+          sendApplicationApprovedEmail(
+            `${profile.firstName} ${profile.lastName}`,
+            profile.email,
+            scholarship.title,
+            scholarship.amount,
+            application.id
+          ).catch(err => console.error('Failed to send approval email:', err));
+        } else if (status === 'declined') {
+          sendApplicationRejectedEmail(
+            `${profile.firstName} ${profile.lastName}`,
+            profile.email,
+            scholarship.title,
+            scholarship.amount,
+            application.id
+          ).catch(err => console.error('Failed to send rejection email:', err));
+        }
+      }
+
+      // Create in-app notification for status change
+      if (status === 'approved' || status === 'accepted' || status === 'declined') {
+        createApplicationStatusNotification(
+          application.userId,
+          applicationId,
+          status === 'declined' ? 'declined' : 'approved'
+        ).catch(err => console.error('Failed to create status notification:', err));
+      }
+
+      res.json(application);
+    } catch (error) {
+      console.error("Error updating application status:", error);
+      res.status(500).json({ error: "Failed to update application status" });
+    }
+  });
+
+  // Email preferences validation schema
+  const emailPreferencesSchema = z.object({
+    emailNotifications: z.boolean().optional(),
+    emailApplicationUpdates: z.boolean().optional(),
+    emailDeadlineReminders: z.boolean().optional(),
+    emailWeeklyDigest: z.boolean().optional(),
+  });
+
+  // Update email notification preferences
+  app.patch("/api/profile/email-preferences", requireAuth, async (req, res) => {
+    try {
+      const validated = emailPreferencesSchema.parse(req.body);
+      
+      const profile = await storage.updateStudentProfileEmailPreferences(req.session.userId!, validated);
+      
+      if (!profile) {
+        return res.status(404).json({ error: "Profile not found" });
+      }
+      
+      res.json(profile);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid email preferences data", details: error.errors });
+      }
+      console.error("Error updating email preferences:", error);
+      res.status(500).json({ error: "Failed to update email preferences" });
+    }
+  });
+
+  // Send document reminder email (admin or automated trigger)
+  app.post("/api/admin/send-reminder", requireAdmin, async (req, res) => {
+    try {
+      const { userId, scholarshipId, pendingItems } = req.body;
+      
+      const profile = await storage.getStudentProfileByUserId(userId);
+      const scholarship = await storage.getScholarship(scholarshipId);
+      const application = await storage.getScholarshipApplication(userId, scholarshipId);
+      
+      if (!profile || !scholarship || !application) {
+        return res.status(404).json({ error: "Profile, scholarship, or application not found" });
+      }
+      
+      if (profile.emailNotifications === false || profile.emailDeadlineReminders === false) {
+        return res.json({ success: false, message: "User has disabled reminder emails" });
+      }
+      
+      const result = await sendDocumentReminderEmail(
+        `${profile.firstName} ${profile.lastName}`,
+        profile.email,
+        scholarship.title,
+        pendingItems || [],
+        scholarship.deadline,
+        application.id
+      );
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error sending reminder:", error);
+      res.status(500).json({ error: "Failed to send reminder" });
+    }
+  });
+
+  // Get all applications for admin
+  app.get("/api/admin/applications", requireAdmin, async (req, res) => {
+    try {
+      const applications = await storage.getAllApplicationsWithDetails();
+      res.json(applications);
+    } catch (error) {
+      console.error("Error fetching all applications:", error);
+      res.status(500).json({ error: "Failed to fetch applications" });
+    }
+  });
+
+  // ==================== NOTIFICATION ENDPOINTS ====================
+
+  // Get all active (unresolved) notifications for the current user
+  app.get("/api/notifications", requireAuth, async (req, res) => {
+    try {
+      const notifications = await getActiveNotifications(req.session.userId!);
+      res.json(notifications);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      res.status(500).json({ error: "Failed to fetch notifications" });
+    }
+  });
+
+  // Check for new notifications (runs all notification checks)
+  app.post("/api/notifications/check", requireAuth, async (req, res) => {
+    try {
+      const result = await runNotificationChecks(req.session.userId!);
+      res.json(result);
+    } catch (error) {
+      console.error("Error checking notifications:", error);
+      res.status(500).json({ error: "Failed to check notifications" });
+    }
+  });
+
+  // Mark a notification as read
+  app.patch("/api/notifications/:notificationId/read", requireAuth, async (req, res) => {
+    try {
+      const { notificationId } = req.params;
+      await markNotificationAsRead(notificationId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+      res.status(500).json({ error: "Failed to mark notification as read" });
+    }
+  });
+
+  // Resolve (dismiss) a notification
+  app.patch("/api/notifications/:notificationId/resolve", requireAuth, async (req, res) => {
+    try {
+      const { notificationId } = req.params;
+      await resolveNotification(notificationId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error resolving notification:", error);
+      res.status(500).json({ error: "Failed to resolve notification" });
+    }
+  });
+
+  // Get notification count (unread)
+  app.get("/api/notifications/count", requireAuth, async (req, res) => {
+    try {
+      const notifications = await getActiveNotifications(req.session.userId!);
+      const unreadCount = notifications.filter(n => !n.isRead).length;
+      res.json({ total: notifications.length, unread: unreadCount });
+    } catch (error) {
+      console.error("Error fetching notification count:", error);
+      res.status(500).json({ error: "Failed to fetch notification count" });
+    }
+  });
+
+  // Check profile completion and create/resolve notification as needed
+  app.post("/api/notifications/check-profile", requireAuth, async (req, res) => {
+    try {
+      const notification = await checkAndCreateProfileNotification(req.session.userId!);
+      res.json({ notification });
+    } catch (error) {
+      console.error("Error checking profile notification:", error);
+      res.status(500).json({ error: "Failed to check profile notification" });
+    }
+  });
+
+  // Admin: Create a document rejection notification for a student
+  app.post("/api/admin/notifications/document-rejected", requireAdmin, async (req, res) => {
+    try {
+      const { userId, applicationId, documentType, rejectionReason } = req.body;
+      
+      if (!userId || !applicationId || !documentType || !rejectionReason) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+      
+      const notification = await createRejectedDocumentNotification(
+        userId,
+        applicationId,
+        documentType,
+        rejectionReason
+      );
+      
+      res.json(notification);
+    } catch (error) {
+      console.error("Error creating document rejection notification:", error);
+      res.status(500).json({ error: "Failed to create notification" });
+    }
+  });
+
+  // Admin: Create a technical error notification for a student
+  app.post("/api/admin/notifications/technical-error", requireAdmin, async (req, res) => {
+    try {
+      const { userId, errorDescription, applicationId } = req.body;
+      
+      if (!userId || !errorDescription) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+      
+      const notification = await createTechnicalErrorNotification(
+        userId,
+        errorDescription,
+        applicationId
+      );
+      
+      res.json(notification);
+    } catch (error) {
+      console.error("Error creating technical error notification:", error);
+      res.status(500).json({ error: "Failed to create notification" });
     }
   });
 

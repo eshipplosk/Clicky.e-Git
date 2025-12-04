@@ -6,6 +6,57 @@ ScholarHub is a web-based scholarship management platform designed to connect st
 
 ## Recent Changes
 
+**December 4, 2025 - Application Progress Bar**
+- Created visual status bar showing students their progress through the scholarship application process
+- 7 clearly labeled stages: Account Created, Profile Completed, Application Started, Documents Uploaded, Application Submitted, Under Review, Decision Made
+- Horizontal progress bar with connected stage indicators that fill/highlight as students advance
+- Stage determination logic based on profile completion, application status, and document upload status
+- Three component variants:
+  - ApplicationProgressBar: Full 7-stage visual bar with labels and descriptions
+  - OverallProgressBar: Simplified progress bar showing overall application journey progress percentage
+  - MiniProgressIndicator: Compact dot-based indicator for scholarship cards
+- Color coding: completed stages (primary), current stage (highlighted with ring), pending stages (muted), decision stage (green for approved, red for not selected)
+- Real-time updates via React Query data dependencies
+- Integrated into MyScholarships page (overall bar + mini indicators per scholarship) and ScholarshipApplicationDetails page (full progress bar)
+- Component file: client/src/components/ApplicationProgressBar.tsx
+
+**December 4, 2025 - Issue-Based Notification System**
+- Created comprehensive notification system to identify and alert students about actionable issues
+- Database schema: notifications table with type, title, message, priority, action links, resolution status, expiration, and metadata
+- 9 notification types: missing_profile_fields, missing_documents, invalid_documents, deadline_approaching, application_approved, application_denied, document_rejected, technical_error, scholarship_updated
+- 4 priority levels: urgent (red), high (yellow), medium (blue), low (gray) with distinct UI styling
+- Auto-resolution logic: notifications automatically resolve when underlying issues are fixed (profile completed, documents uploaded, etc.)
+- Notification service (server/notificationService.ts): detects issues and creates appropriate notifications with email integration
+- API endpoints: GET /api/notifications, POST /api/notifications/check, PATCH /api/notifications/:id/read, PATCH /api/notifications/:id/resolve
+- NotificationCenter UI component with priority-based styling, action buttons linking to relevant pages, and dismissal functionality
+- Notification checks triggered on: dashboard load, profile updates, application status changes
+- Deadline notifications auto-expire based on expiresAt field
+- Email notifications respect user preferences before sending
+- Architect reviewed: auto-resolution and filtering logic verified
+
+**December 4, 2025 - Email Notification System**
+- Implemented automated email notifications using Resend integration
+- Email types: application confirmation, approval, rejection, document reminders, deadline alerts, weekly status digests
+- HTML email templates with Clicky.e branding (yellow #ffb800) and direct links to dashboard
+- Added email preference fields to student profiles (master toggle + individual preferences)
+- Created EmailPreferences component with switches for granular control
+- Integrated preferences into profile page and student settings
+- Admin endpoints for sending reminders and updating application statuses
+- Email triggers respect user preferences before sending
+- Zod validation for email preference updates
+- Architect reviewed: fixed rejection email trigger and added validation
+
+**December 4, 2025 - Action Needed Banner**
+- Created ActionNeededBanner component that displays when student profile is incomplete
+- Uses same 15-field validation logic as ProfileCompletionIndicator for consistency
+- Tracks: personal info (3), academic details (4 incl. any test score), demographics (2), achievements (4), financial (2)
+- Groups missing fields by category with concise display (shows up to 3 items + overflow count)
+- Progress bar shows completion percentage matching the profile completion indicator
+- Dismiss button temporarily hides banner (resets on page reload)
+- Banner appears at top of all student routes when profile is incomplete
+- Automatically hides when all 15 required fields are complete
+- Architect reviewed: passed with correct field parity and React best practices
+
 **December 4, 2025 - International Student Resources Section**
 - Added "International Student Tuition & Scholarship Resources" section to student dashboard
 - Created JSON config file (client/src/config/internationalResources.json) for easy resource updates without code changes

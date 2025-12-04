@@ -18,6 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getStoredProfile, setStoredProfile } from '../App';
 import { apiRequest } from '@/lib/queryClient';
 import { ProfileCompletionIndicator } from './ProfileCompletionIndicator';
+import { EmailPreferences } from './EmailPreferences';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export interface ProfileData {
@@ -926,6 +927,9 @@ export function EnhancedProfile({ onSave }: { onSave?: (data: ProfileData) => vo
           </div>
         </CardContent>
       </Card>
+
+      {/* Email Preferences - shown below the form, not inside it */}
+      <EmailPreferences />
 
     </form>
   );
