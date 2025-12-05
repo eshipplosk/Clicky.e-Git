@@ -57,6 +57,14 @@ ScholarHub is a web-based scholarship management platform designed to connect st
 - Automatically hides when all 15 required fields are complete
 - Architect reviewed: passed with correct field parity and React best practices
 
+**December 5, 2025 - Sponsorship Resources Addition**
+- Expanded International Student Resources section with sponsorship-related external links
+- Added 6 new resources: USCIS Affidavit of Support (I-864), U.S. Visa Financial Evidence, USCIS Declaration of Support (I-134), University of Arkansas International Students, UA Little Rock International Admissions, Study in the States
+- New "Sponsorship & Visa" category with orange color styling
+- Resources cover government visa financial guidelines, sample affidavits of support, and Arkansas university sponsorship information
+- Added 5 new icons to component: FileText, Shield, FileCheck, School, BookOpen
+- All resources easily updateable via JSON config file
+
 **December 4, 2025 - International Student Resources Section**
 - Added "International Student Tuition & Scholarship Resources" section to student dashboard
 - Created JSON config file (client/src/config/internationalResources.json) for easy resource updates without code changes
