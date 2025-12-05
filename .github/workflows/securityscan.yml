@@ -1,10 +1,8 @@
 name: "Security CI"
 
 on:
-  push:
-    branches: [ "main" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main-new" ]
   schedule:
     - cron: "0 3 * * 1"  # optional: weekly scan (Mondays 03:00 UTC)
 
@@ -92,4 +90,81 @@ jobs:
           fail-on-severity: moderate
           # You can also configure license rules, allowlists, etc.
           # allow-licenses: MIT,Apache-2.0
+
+# ---------------------------------------------
+  # 4) Maria - Spell Checker
+  # ---------------------------------------------
+  spell-check:
+    name: Spell Checker (Maria)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Spell Checker
+        uses: crate-ci/typos@v1.21.0
+        with:
+          config: .typos.toml   # optional config file
+
+  # ---------------------------------------------
+  # 5) Valentina - Broken Link Checker
+  # ---------------------------------------------
+  broken_links:
+    name: Broken Link Detection (Valen)
+    runs-on: ubuntu-latest
+ 
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+ 
+      - name: Run Broken Link Checker
+        uses: lycheeverse/lychee-action@v1
+        with:
+          args: --verbose --no-progress ./client ./server
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+ 
+      - name: Upload broken links report
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: broken-links-report
+          path: ./lychee-report.md
+  
+  # ---------------------------------------------
+  # 6)  Jenn - Image Optimization
+  # ---------------------------------------------
+  image-optimization:
+    name: Image Optimization
+    runs-on: ubuntu-latest
+ 
+    permissions:
+      contents: read
+ 
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+ 
+      - name: Run Image Optimization Check
+        uses: calibreapp/image-actions@v1
+        with:
+          image_paths: |
+            **/*.png
+            **/*.jpg
+            **/*.jpeg
+            **/*.webp
+          compress_only: true
+ 
+      - name: Validate Optimization State
+        run: |
+          if ! git diff --quiet; then
+            echo "Image files were modified during optimization."
+            echo "Please optimize images locally and commit the updated files."
+            git diff --stat
+            exit 1
+          else
+            echo "All images are optimized."
 

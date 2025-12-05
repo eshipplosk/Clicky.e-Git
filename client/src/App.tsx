@@ -37,7 +37,7 @@ export function setStoredProfile(profile: ProfileData) {
   // Trigger storage event for cross-component updates
   window.dispatchEvent(new Event('profileUpdated'));
 }
-
+// User interface
 interface User {
   id: string;
   username: string;
