@@ -10,7 +10,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ExternalLink, Calculator, GraduationCap, Award, DollarSign, Globe, Landmark, MapPin, Heart } from 'lucide-react';
+import { ExternalLink, Calculator, GraduationCap, Award, DollarSign, Globe, Landmark, MapPin, Heart, FileText, Shield, FileCheck, School, BookOpen } from 'lucide-react';
 import resourcesConfig from '@/config/internationalResources.json';
 
 // Type definitions for the resource configuration
@@ -51,6 +51,11 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   'landmark': Landmark,
   'map-pin': MapPin,
   'heart': Heart,
+  'file-text': FileText,
+  'shield': Shield,
+  'file-check': FileCheck,
+  'school': School,
+  'book-open': BookOpen,
 };
 
 /**
@@ -63,6 +68,7 @@ const getCategoryStyles = (color: string): string => {
     'blue': 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
     'green': 'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20',
     'purple': 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20',
+    'orange': 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20',
   };
   return colorMap[color] || colorMap['primary'];
 };

@@ -65,6 +65,54 @@
       "url": "https://www.rotary.org/en/our-programs/peace-fellowships",
       "category": "scholarships",
       "icon": "heart"
+    },
+    {
+      "id": "uscis-i864",
+      "title": "USCIS Affidavit of Support (I-864)",
+      "description": "Official U.S. government guide on financial sponsorship requirements and the Affidavit of Support form.",
+      "url": "https://www.uscis.gov/i-864",
+      "category": "sponsorship",
+      "icon": "file-text"
+    },
+    {
+      "id": "state-dept-visa-finance",
+      "title": "U.S. Visa Financial Evidence",
+      "description": "State Department guidelines on proving financial ability to support your studies for F-1 student visas.",
+      "url": "https://travel.state.gov/content/travel/en/us-visas/study/student-visa.html",
+      "category": "sponsorship",
+      "icon": "shield"
+    },
+    {
+      "id": "i134-declaration",
+      "title": "USCIS Declaration of Support (I-134)",
+      "description": "Information about the I-134 form used to show a sponsor's financial commitment for student visa applicants.",
+      "url": "https://www.uscis.gov/i-134",
+      "category": "sponsorship",
+      "icon": "file-check"
+    },
+    {
+      "id": "uark-international",
+      "title": "University of Arkansas International Students",
+      "description": "Financial documentation and sponsorship requirements for international students at the University of Arkansas.",
+      "url": "https://international-students.uark.edu/admission/financial-documents/index.php",
+      "category": "sponsorship",
+      "icon": "school"
+    },
+    {
+      "id": "ualr-international",
+      "title": "UA Little Rock International Admissions",
+      "description": "Financial requirements and sponsorship information for international students at UA Little Rock.",
+      "url": "https://ualr.edu/admissions/international/",
+      "category": "sponsorship",
+      "icon": "school"
+    },
+    {
+      "id": "studyinthestates",
+      "title": "Study in the States",
+      "description": "Official DHS resource explaining financial requirements and documentation for international students.",
+      "url": "https://studyinthestates.dhs.gov/students/prepare/finances",
+      "category": "sponsorship",
+      "icon": "book-open"
     }
   ],
   "categories": {
@@ -83,6 +131,10 @@
     "official": {
       "label": "Official Resources",
       "color": "purple"
+    },
+    "sponsorship": {
+      "label": "Sponsorship & Visa",
+      "color": "orange"
     }
   }
 }
