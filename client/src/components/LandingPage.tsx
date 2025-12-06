@@ -59,7 +59,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
               <img src={logoImage} alt="Clicky.e" className="h-16" style={{ width: 'auto' }} />
             </div>
             <h1 className="text-5xl md:text-6xl font-bold tracking-tight" data-testid="text-hero-title">
-              Find Your Path to <span className="text-primary">Scholarship Succes</span>
+              Find Your Path to <span className="text-primary">Scholarship Success</span>
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto" data-testid="text-hero-description">
               Discover personalized scholarship opportunities and unlock your potential. 
